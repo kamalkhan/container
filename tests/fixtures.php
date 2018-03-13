@@ -2,6 +2,8 @@
 
 namespace Bhittani\Container\Fixtures;
 
+use Bhittani\Container\AbstractServiceProvider;
+
 class Foobar {
     function __construct($foo) {}
 }
@@ -59,4 +61,63 @@ class ContractParam {
 
 class MixedParams {
     function __construct(WithTwoParams $w2, $foo, $bar = null) {}
+}
+
+
+// Serviceable
+
+class FooService {}
+
+class FooServiceProvider extends AbstractServiceProvider {
+    public function boot() {
+        global $booted;
+        $booted++;
+    }
+    public function register() {
+        global $container, $registered;
+        $container = $this->container;
+        $registered++;
+    }
+}
+
+class DeferredBindingServiceProvider extends AbstractServiceProvider {
+    protected $provides = [FooService::class];
+    public function boot() {
+        global $booted;
+        $booted++;
+    }
+    public function register() {
+        global $container, $registered;
+        $container = $this->container;
+        $registered++;
+    }
+}
+
+class DeferredFacadeServiceProvider extends AbstractServiceProvider {
+    protected $provides = ['foo' => FooService::class];
+    public function boot() {
+        global $booted;
+        $booted++;
+    }
+    public function register() {
+        global $container, $registered;
+        $container = $this->container;
+        $registered++;
+    }
+}
+
+class DeferredMacroServiceProvider extends AbstractServiceProvider {
+    protected $macros = ['foo'];
+    public function boot() {
+        global $booted;
+        $booted++;
+    }
+    public function register() {
+        global $container, $registered;
+        $container = $this->container;
+        $registered++;
+        $container->macro('foo', function ($foo) {
+            return $foo;
+        });
+    }
 }
