@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of bhittani/container.
+ *
+ * (c) Kamal Khan <shout@bhittani.com>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Bhittani\Container;
 
 use InvalidArgumentException;
@@ -18,6 +27,64 @@ class ServiceContainer extends Container
     protected $deferredMacros = [];
     protected $deferredBindings = [];
     protected $registeredProviders = [];
+
+    public function __set($property, $value)
+    {
+        return $this->addFacade($property, $value);
+    }
+
+    public function __get($property)
+    {
+        if (! isset($this->facades[$property])) {
+            throw new Exception(
+                sprintf(
+                    'Undefined property %s::%s. Facade %s is not defined.',
+                    get_class(),
+                    $property,
+                    $property
+                )
+            );
+        }
+
+        $facade = $this->facades[$property];
+
+        if (is_string($facade)) {
+            return $this->get($facade);
+        }
+
+        if (is_callable($facade) && method_exists($this, 'call')) {
+            return $this->call($facade);
+        }
+
+        return $facade;
+    }
+
+    public static function __callStatic($method, $parameters)
+    {
+        if ((! static::hasMacro($method))
+            && isset($this->deferredMacros[$method])
+        ) {
+            $this->promoteDeferredServiceProvider($this->deferredMacros[$method]);
+        }
+
+        return static::macroCallStatic($method, $parameters);
+    }
+
+    public function __call($method, $parameters)
+    {
+        if ((! static::hasMacro($method))
+            && isset($this->deferredMacros[$method])
+        ) {
+            $this->promoteDeferredServiceProvider($this->deferredMacros[$method]);
+        }
+
+        return static::macroCall($method, $parameters);
+    }
+
+    public function __invoke()
+    {
+        call_user_func_array([$this, 'bootstrap'], func_get_args());
+    }
 
     public function addServiceProvider($provider)
     {
@@ -94,10 +161,12 @@ class ServiceContainer extends Container
         if ((! is_object($provider))
             || (! $provider instanceof ServiceProviderInterface)
         ) {
-            throw new InvalidArgumentException(sprintf(
-                '%s is not a valid service provider',
-                $provider
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    '%s is not a valid service provider',
+                    $provider
+                )
+            );
         }
 
         if ($force || (! $this->isServiceProviderDeferred($provider))) {
@@ -142,61 +211,5 @@ class ServiceContainer extends Container
         }
 
         return $provider;
-    }
-
-    public function __set($property, $value)
-    {
-        return $this->addFacade($property, $value);
-    }
-
-    public function __get($property)
-    {
-        if (! isset($this->facades[$property])) {
-            throw new Exception(sprintf(
-                'Undefined property %s::%s. Facade %s is not defined.',
-                get_class(),
-                $property,
-                $property
-            ));
-        }
-
-        $facade = $this->facades[$property];
-
-        if (is_string($facade)) {
-            return $this->get($facade);
-        }
-
-        if (is_callable($facade) && method_exists($this, 'call')) {
-            return $this->call($facade);
-        }
-
-        return $facade;
-    }
-
-    public static function __callStatic($method, $parameters)
-    {
-        if ((! static::hasMacro($method))
-            && isset($this->deferredMacros[$method])
-        ) {
-            $this->promoteDeferredServiceProvider($this->deferredMacros[$method]);
-        }
-
-        return static::macroCallStatic($method, $parameters);
-    }
-
-    public function __call($method, $parameters)
-    {
-        if ((! static::hasMacro($method))
-            && isset($this->deferredMacros[$method])
-        ) {
-            $this->promoteDeferredServiceProvider($this->deferredMacros[$method]);
-        }
-
-        return static::macroCall($method, $parameters);
-    }
-
-    public function __invoke()
-    {
-        call_user_func_array([$this, 'bootstrap'], func_get_args());
     }
 }

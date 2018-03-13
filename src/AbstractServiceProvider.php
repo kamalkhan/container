@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of bhittani/container.
+ *
+ * (c) Kamal Khan <shout@bhittani.com>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Bhittani\Container;
 
 abstract class AbstractServiceProvider implements ServiceProviderInterface
@@ -12,12 +21,16 @@ abstract class AbstractServiceProvider implements ServiceProviderInterface
     /**
      * @inheritDoc
      */
-    public function boot() {}
+    public function boot()
+    {
+    }
 
     /**
      * @inheritDoc
      */
-    public function register() {}
+    public function register()
+    {
+    }
 
     /**
      * @inheritDoc

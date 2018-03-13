@@ -48,7 +48,7 @@
         "coverage-html": "phpunit --colors=always --coverage-html coverage",
         "coverage-clover": "phpunit --colors=always --coverage-clover coverage.xml",
         "cs-check": "phpcs --standard=PSR2 src",
-        "cs-fix": "php-cs-fixer fix",
+        "cs-fix": "phpcbf --standard=PSR2 src",
         "check": ["@cs-check", "@test"]
     },
     "repositories": [

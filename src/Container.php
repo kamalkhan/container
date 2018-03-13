@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of bhittani/container.
+ *
+ * (c) Kamal Khan <shout@bhittani.com>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Bhittani\Container;
 
 use Closure;
@@ -35,11 +44,10 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Resolve an entry by key.
      *
+     * @param  string $key
+     * @param  array  $explicitArgs
      * @throws NotFoundException Entry not found.
      * @throws BindingResolutionException Entry can not be resolved.
-     *
-     * @param  string  $key
-     * @param  array  $explicitArgs
      * @return mixed
      */
     public function get($key, array $explicitArgs = [])
@@ -51,10 +59,15 @@ class Container implements ContainerInterface, ArrayAccess
                 try {
                     $entity = $this->resolveCallable($entity, $explicitArgs);
                 } catch (Exception $e) {
-                    throw new BindingResolutionException(sprintf(
-                        'Failed to resolve callable %s while resolving %s from the container.',
-                        get_class($entity), $key
-                    ), 1, $e);
+                    throw new BindingResolutionException(
+                        sprintf(
+                            'Failed to resolve callable %s while resolving %s from the container.',
+                            get_class($entity),
+                            $key
+                        ),
+                        1,
+                        $e
+                    );
                 }
                 if (is_string($key) && in_array($key, $this->shared)) {
                     $this->items[$key] = $entity;
@@ -68,32 +81,42 @@ class Container implements ContainerInterface, ArrayAccess
             try {
                 $entity = $this->resolveClass($key, $explicitArgs);
             } catch (Exception $e) {
-                throw new BindingResolutionException(sprintf(
-                    'Failed to resolve class %s from the container.', $key
-                ), 1, $e);
+                throw new BindingResolutionException(
+                    sprintf(
+                        'Failed to resolve class %s from the container.',
+                        $key
+                    ),
+                    1,
+                    $e
+                );
             }
 
             return $entity;
         }
 
         if (interface_exists($key)) {
-            throw new BindingResolutionException(sprintf(
-                'Failed to resolve interface %s from the container.', $key
-            ));
+            throw new BindingResolutionException(
+                sprintf(
+                    'Failed to resolve interface %s from the container.',
+                    $key
+                )
+            );
         }
 
-        throw new NotFoundException(sprintf(
-            '%s is not managed by the container.', $key
-        ));
+        throw new NotFoundException(
+            sprintf(
+                '%s is not managed by the container.',
+                $key
+            )
+        );
     }
 
     /**
      * Resolve a callable.
      *
+     * @param  callable $callable
+     * @param  array    $explicitArgs
      * @throws BindingResolutionException Entry can not be resolved.
-     *
-     * @param  callable  $callable
-     * @param  array  $explicitArgs
      * @return mixed
      */
     public function call(callable $callable, array $explicitArgs = [])
@@ -104,7 +127,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Check whether an entry for a key exists.
      *
-     * @param  string  $key
+     * @param  string $key
      * @return boolean
      */
     public function has($key)
@@ -117,7 +140,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Add an entry.
      *
-     * @param  string  $key
+     * @param  string $key
      * @param  mixed  $value
      * @return $this
      */
@@ -133,7 +156,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Add a shared entry.
      *
-     * @param  string  $key
+     * @param  string $key
      * @param  mixed  $value
      * @return $this
      */
@@ -151,7 +174,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Add a delegation.
      *
-     * @param  ContainerInterface  $container
+     * @param  ContainerInterface $container
      * @return $this
      */
     public function delegate(ContainerInterface $container)
@@ -164,11 +187,12 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * ArrayAccess: Alias of add.
      *
-     * @param  string  $offset
+     * @param  string $offset
      * @param  mixed  $value
      * @return mixed
      */
-    public function offsetSet($offset, $value) {
+    public function offsetSet($offset, $value)
+    {
         if (is_null($offset)) {
             $this->items[] = $value;
         } else {
@@ -181,38 +205,42 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * ArrayAccess: alias of has.
      *
-     * @param  string  $offset
+     * @param  string $offset
      * @return boolean
      */
-    public function offsetExists($offset) {
+    public function offsetExists($offset)
+    {
         return $this->has($offset);
     }
 
     /**
      * ArrayAccess: unset a key binding.
-     * @param  string  $offset
+     *
+     * @param  string $offset
      * @return void
      */
-    public function offsetUnset($offset) {
+    public function offsetUnset($offset)
+    {
         $this->find($offset, $found, true);
     }
 
     /**
      * ArrayAccess: alias of get.
      *
-     * @param  string  $offset
+     * @param  string $offset
      * @return mixed
      */
-    public function offsetGet($offset) {
+    public function offsetGet($offset)
+    {
         return $this->get($offset);
     }
 
     /**
      * Resolve parameter bindings from the container.
      *
+     * @param  array $bindings
+     * @param  array $explicitArgs
      * @throws BindingResolutionException Entry can not be resolved.
-     * @param  array  $bindings
-     * @param  array  $explicitArgs
      * @return array
      */
     protected function resolve(array $bindings, array $explicitArgs = [])
@@ -247,7 +275,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Resolve a class.
      *
-     * @param  string  $class
+     * @param  string $class
      * @param  array  $explicitArgs
      * @return object
      */
@@ -268,8 +296,8 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Resolve a callable.
      *
-     * @param  callable  $callable
-     * @param  array  $explicitArgs
+     * @param  callable $callable
+     * @param  array    $explicitArgs
      * @return mixed
      */
     protected function resolveCallable(callable $callable, array $explicitArgs = [])
@@ -293,7 +321,8 @@ class Container implements ContainerInterface, ArrayAccess
      * Find an entry including within delegates.
      *
      * @param  string  $key
-     * @param  boolean  $found
+     * @param  boolean $found
+     * @param  bool    $unset
      * @return mixed
      */
     protected function find($key, & $found = false, $unset = false)

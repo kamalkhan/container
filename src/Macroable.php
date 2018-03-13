@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of bhittani/container.
+ *
+ * (c) Kamal Khan <shout@bhittani.com>
+ *
+ * For the full copyright and license information, please view
+ * the LICENSE file that was distributed with this source code.
+ */
+
 namespace Bhittani\Container;
 
 use Closure;
@@ -17,10 +26,65 @@ trait Macroable
     protected static $macros = [];
 
     /**
+     * Call a defined macro as static.
+     *
+     * @param string       $method
+     * @param array[mixed] $parameters
+     */
+    public static function __callStatic($method, $parameters)
+    {
+        if (! static::hasMacro($method)) {
+            throw new BadMethodCallException(
+                sprintf(
+                    'Method %s::%s does not exist.',
+                    static::class,
+                    $method
+                )
+            );
+        }
+
+        if (static::$macros[$method] instanceof Closure) {
+            return call_user_func_array(
+                Closure::bind(static::$macros[$method], null, static::class),
+                $parameters
+            );
+        }
+
+        return call_user_func_array(static::$macros[$method], $parameters);
+    }
+
+    /**
+     * Call a defined macro.
+     *
+     * @param string       $method
+     * @param array[mixed] $parameters
+     */
+    public function __call($method, $parameters)
+    {
+        if (! static::hasMacro($method)) {
+            throw new BadMethodCallException(
+                sprintf(
+                    'Method %s::%s does not exist.',
+                    static::class,
+                    $method
+                )
+            );
+        }
+
+        $macro = static::$macros[$method];
+
+        if ($macro instanceof Closure) {
+            return call_user_func_array($macro->bindTo($this, static::class), $parameters);
+        }
+
+        return call_user_func_array($macro, $parameters);
+    }
+
+    /**
      * Register a custom macro.
      *
-     * @param  string  $name
-     * @param  object|callable  $macro
+     * @param string          $name
+     * @param object|callable $macro
      */
     public static function macro($name, $macro)
     {
@@ -30,7 +94,7 @@ trait Macroable
     /**
      * Mix another object into the class.
      *
-     * @param  object  $mixin
+     * @param object $mixin
      */
     public static function mixin($mixin)
     {
@@ -48,57 +112,10 @@ trait Macroable
     /**
      * Checks whether the given macro is available.
      *
-     * @param  string  $name
+     * @param string $name
      */
     public static function hasMacro($name)
     {
         return isset(static::$macros[$name]);
-    }
-
-    /**
-     * Call a defined macro as static.
-     *
-     * @param  string  $method
-     * @param  array[mixed]  $parameters
-     */
-    public static function __callStatic($method, $parameters)
-    {
-        if (! static::hasMacro($method)) {
-            throw new BadMethodCallException(sprintf(
-                'Method %s::%s does not exist.', static::class, $method
-            ));
-        }
-
-        if (static::$macros[$method] instanceof Closure) {
-            return call_user_func_array(
-                Closure::bind(static::$macros[$method], null, static::class),
-                $parameters
-            );
-        }
-
-        return call_user_func_array(static::$macros[$method], $parameters);
-    }
-
-    /**
-     * Call a defined macro.
-     *
-     * @param  string  $method
-     * @param  array[mixed]  $parameters
-     */
-    public function __call($method, $parameters)
-    {
-        if (! static::hasMacro($method)) {
-            throw new BadMethodCallException(sprintf(
-                'Method %s::%s does not exist.', static::class, $method
-            ));
-        }
-
-        $macro = static::$macros[$method];
-
-        if ($macro instanceof Closure) {
-            return call_user_func_array($macro->bindTo($this, static::class), $parameters);
-        }
-
-        return call_user_func_array($macro, $parameters);
     }
 }
