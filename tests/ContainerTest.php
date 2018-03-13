@@ -2,106 +2,12 @@
 
 namespace Bhittani\Container;
 
-use org\bovigo\vfs\vfsStream;
-
 class ContainerTest extends \PHPUnit_Framework_TestCase
 {
     protected $container;
 
     function setUp()
     {
-        vfsStream::setup('bhittani', null, [
-            'container' => [
-                'Foobar.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class Foobar {
-                            function __construct($foo) {}
-                        }',
-                'WithoutConstructor.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class WithoutConstructor {}',
-                'WithZeroParams.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class WithZeroParams {
-                            function __construct() {}
-                        }',
-                'WithOneParam.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class WithOneParam {
-                            function __construct(WithZeroParams $w0) {}
-                        }',
-                'WithTwoParams.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class WithTwoParams {
-                            function __construct(WithZeroParams $w0, WithOneParam $w1) {}
-                        }',
-                'WithManagedParams.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class WithManagedParams {
-                            function __construct(Foobar $foo, WithOneParam $w1) {}
-                        }',
-                'WithOptionalParams.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class WithOptionalParams {
-                            public $a;
-                            function __construct(WithTwoParams $w2, $a = "b") {
-                                $this->a = $a;
-                            }
-                        }',
-                'Invocable.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class Invocable {
-                            function __invoke() { return "invoke"; }
-                        }',
-                'InvocableWithParams.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class InvocableWithParams {
-                            function __invoke(WithZeroParams $w0, WithOneParam $w1) {
-                                return "invoke + params";
-                            }
-                        }',
-                'Contract.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        interface Contract {
-                            function contract();
-                        }',
-                'Concrete.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class Concrete implements Contract {
-                            function __construct(WithZeroParams $w0, WithOneParam $w1) {}
-                            function contract() {}
-                        }',
-                'ContractParam.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class ContractParam {
-                            public $concrete;
-                            function __construct(Contract $concrete) {
-                                $this->concrete = $concrete;
-                            }
-                        }',
-                'MixedParams.php' =>
-                    '<?php namespace Bhittani\Container\Test;
-                        class MixedParams {
-                            function __construct(WithTwoParams $w2, $foo, $bar = null) {}
-                        }',
-                //
-            ],
-        ]);
-
-        require_once vfsStream::url('bhittani/container/Foobar.php');
-        require_once vfsStream::url('bhittani/container/WithoutConstructor.php');
-        require_once vfsStream::url('bhittani/container/WithZeroParams.php');
-        require_once vfsStream::url('bhittani/container/WithOneParam.php');
-        require_once vfsStream::url('bhittani/container/WithTwoParams.php');
-        require_once vfsStream::url('bhittani/container/WithManagedParams.php');
-        require_once vfsStream::url('bhittani/container/WithOptionalParams.php');
-        require_once vfsStream::url('bhittani/container/Invocable.php');
-        require_once vfsStream::url('bhittani/container/InvocableWithParams.php');
-        require_once vfsStream::url('bhittani/container/Contract.php');
-        require_once vfsStream::url('bhittani/container/Concrete.php');
-        require_once vfsStream::url('bhittani/container/ContractParam.php');
-        require_once vfsStream::url('bhittani/container/MixedParams.php');
-
         $this->container = new Container;
     }
 
@@ -127,36 +33,36 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_resolves_an_unbinded_object_if_class_constructor_is_not_defined_or_has_no_params()
     {
-        $class = 'Bhittani\Container\Test\WithoutConstructor';
+        $class = 'Bhittani\Container\Fixtures\WithoutConstructor';
         $this->assertInstanceOf($class, $this->container->get($class));
 
-        $class = 'Bhittani\Container\Test\WithZeroParams';
+        $class = 'Bhittani\Container\Fixtures\WithZeroParams';
         $this->assertInstanceOf($class, $this->container->get($class));
     }
 
     /** @test */
     function it_resolves_an_object_if_class_constructor_params_can_be_resolved_recursively()
     {
-        $class = 'Bhittani\Container\Test\WithTwoParams';
+        $class = 'Bhittani\Container\Fixtures\WithTwoParams';
         $this->assertInstanceOf($class, $this->container->get($class));
     }
 
     /** @test */
     function it_resolves_an_object_if_class_constructor_params_are_being_managed()
     {
-        $foobarClass = 'Bhittani\Container\Test\Foobar';
+        $foobarClass = 'Bhittani\Container\Fixtures\Foobar';
 
         $this->container->add('foo', 'bar');
         $this->assertInstanceOf($foobarClass, $this->container->get($foobarClass));
 
-        $class = 'Bhittani\Container\Test\WithManagedParams';
+        $class = 'Bhittani\Container\Fixtures\WithManagedParams';
         $this->assertInstanceOf($class, $this->container->get($class));
     }
 
     /** @test */
     function it_resolves_a_class_if_constructor_has_optional_params()
     {
-        $class = 'Bhittani\Container\Test\WithOptionalParams';
+        $class = 'Bhittani\Container\Fixtures\WithOptionalParams';
         $this->assertInstanceOf($class, $this->container->get($class));
 
         $this->container->add('a', 'c');
@@ -173,7 +79,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
         });
         $this->assertEquals('b', $this->container->get('a'));
 
-        $foobarClass = 'Bhittani\Container\Test\Foobar';
+        $foobarClass = 'Bhittani\Container\Fixtures\Foobar';
         $this->container->add($foobarClass, function () use ($foobarClass) {
             return new $foobarClass('baz');
         });
@@ -183,7 +89,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_resolves_a_closure_with_params()
     {
-        $this->container->add('closure', function (\Bhittani\Container\Test\WithTwoParams $w2) {
+        $this->container->add('closure', function (\Bhittani\Container\Fixtures\WithTwoParams $w2) {
             return 'it works!';
         });
         $this->assertEquals('it works!', $this->container->get('closure'));
@@ -192,7 +98,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_resolves_a_direct_closure()
     {
-        $result = $this->container->call(function (\Bhittani\Container\Test\WithTwoParams $w2) {
+        $result = $this->container->call(function (\Bhittani\Container\Fixtures\WithTwoParams $w2) {
             return 'it works!';
         });
         $this->assertEquals('it works!', $result);
@@ -201,33 +107,33 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_resolves_an_invocable()
     {
-        $this->container->add('invocable', new \Bhittani\Container\Test\Invocable);
+        $this->container->add('invocable', new \Bhittani\Container\Fixtures\Invocable);
         $this->assertEquals('invoke', $this->container->get('invocable'));
     }
 
     /** @test */
     function it_resolves_an_invocable_with_params()
     {
-        $this->container->add('invocableWithParams', new \Bhittani\Container\Test\InvocableWithParams);
+        $this->container->add('invocableWithParams', new \Bhittani\Container\Fixtures\InvocableWithParams);
         $this->assertEquals('invoke + params', $this->container->get('invocableWithParams'));
     }
 
     /** @test */
     function it_resolves_a_direct_invocable()
     {
-        $result = $this->container->call(new \Bhittani\Container\Test\InvocableWithParams);
+        $result = $this->container->call(new \Bhittani\Container\Fixtures\InvocableWithParams);
         $this->assertEquals('invoke + params', $result);
     }
 
     /** @test */
     function it_resolves_an_interface()
     {
-        $contractInterface = 'Bhittani\Container\Test\Contract';
-        $concreteClass = 'Bhittani\Container\Test\Concrete';
+        $contractInterface = 'Bhittani\Container\Fixtures\Contract';
+        $concreteClass = 'Bhittani\Container\Fixtures\Concrete';
         $concrete = $this->container->get($concreteClass);
         $this->assertInstanceOf($contractInterface, $concrete);
         $this->container->add($contractInterface, $concrete);
-        $contractParamClass = 'Bhittani\Container\Test\ContractParam';
+        $contractParamClass = 'Bhittani\Container\Fixtures\ContractParam';
         $contractParam = $this->container->get($contractParamClass);
         $this->assertInstanceOf($contractParamClass, $contractParam);
     }
@@ -235,13 +141,13 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_accepts_explicit_arguments_to_resolve_an_entity()
     {
-        $class = 'Bhittani\Container\Test\Foobar';
+        $class = 'Bhittani\Container\Fixtures\Foobar';
         $this->assertInstanceOf($class, $this->container->get($class, ['foo' => 'bar']));
 
-        $class = 'Bhittani\Container\Test\MixedParams';
+        $class = 'Bhittani\Container\Fixtures\MixedParams';
         $this->assertInstanceOf($class, $this->container->get($class, ['foo' => 'bar']));
 
-        $closure = function (\Bhittani\Container\Test\WithTwoParams $w2, $bar = null, $foo) {
+        $closure = function (\Bhittani\Container\Fixtures\WithTwoParams $w2, $bar = null, $foo) {
             return $foo;
         };
 
@@ -254,7 +160,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_allows_singletons()
     {
-        $w0Class = 'Bhittani\Container\Test\WithZeroParams';
+        $w0Class = 'Bhittani\Container\Fixtures\WithZeroParams';
 
         $this->container->share('shared', function () use ($w0Class) {
             return new $w0Class;
@@ -278,12 +184,12 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_allows_singleton_interfaces()
     {
-        $contractInterface = 'Bhittani\Container\Test\Contract';
-        $concreteClass = 'Bhittani\Container\Test\Concrete';
+        $contractInterface = 'Bhittani\Container\Fixtures\Contract';
+        $concreteClass = 'Bhittani\Container\Fixtures\Concrete';
         $this->container->share($contractInterface, function () use ($concreteClass) {
             return $this->container->get($concreteClass);
         });
-        $contractParamClass = 'Bhittani\Container\Test\ContractParam';
+        $contractParamClass = 'Bhittani\Container\Fixtures\ContractParam';
         $contractParam1 = $this->container->get($contractParamClass);
         $this->assertInstanceOf($contractParamClass, $contractParam1);
         $contractParam2 = $this->container->get($contractParamClass);
@@ -293,7 +199,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
         $this->container->add($contractInterface, function () use ($concreteClass) {
             return $this->container->get($concreteClass);
         });
-        $contractParamClass = 'Bhittani\Container\Test\ContractParam';
+        $contractParamClass = 'Bhittani\Container\Fixtures\ContractParam';
         $contractParam1 = $this->container->get($contractParamClass);
         $this->assertInstanceOf($contractParamClass, $contractParam1);
         $contractParam2 = $this->container->get($contractParamClass);
@@ -361,6 +267,6 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     function it_throws_a_BindingResolutionException_if_key_can_not_be_resolved()
     {
         $this->setExpectedException(BindingResolutionException::class);
-        $this->container->get('Bhittani\Container\Test\Foobar');
+        $this->container->get('Bhittani\Container\Fixtures\Foobar');
     }
 }
