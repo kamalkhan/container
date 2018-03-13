@@ -39,16 +39,17 @@ class Container implements ContainerInterface, ArrayAccess
      * @throws BindingResolutionException Entry can not be resolved.
      *
      * @param  string  $key
+     * @param  array  $explicitArgs
      * @return mixed
      */
-    public function get($key)
+    public function get($key, array $explicitArgs = [])
     {
         $entity = $this->find($key, $found);
 
         if ($found) {
             if (is_callable($entity)) {
                 try {
-                    $entity = $this->resolveCallable($entity);
+                    $entity = $this->resolveCallable($entity, $explicitArgs);
                 } catch (Exception $e) {
                     throw new BindingResolutionException(sprintf(
                         'Failed to resolve callable %s while resolving %s from the container.',
@@ -65,7 +66,7 @@ class Container implements ContainerInterface, ArrayAccess
 
         if (class_exists($key)) {
             try {
-                $entity = $this->resolveClass($key);
+                $entity = $this->resolveClass($key, $explicitArgs);
             } catch (Exception $e) {
                 throw new BindingResolutionException(sprintf(
                     'Failed to resolve class %s from the container.', $key
@@ -92,11 +93,12 @@ class Container implements ContainerInterface, ArrayAccess
      * @throws BindingResolutionException Entry can not be resolved.
      *
      * @param  callable  $callable
+     * @param  array  $explicitArgs
      * @return mixed
      */
-    public function call(callable $callable)
+    public function call(callable $callable, array $explicitArgs = [])
     {
-        return $this->resolveCallable($callable);
+        return $this->resolveCallable($callable, $explicitArgs);
     }
 
     /**
@@ -209,26 +211,34 @@ class Container implements ContainerInterface, ArrayAccess
      * Resolve parameter bindings from the container.
      *
      * @throws BindingResolutionException Entry can not be resolved.
-     * @param  array $bindings
+     * @param  array  $bindings
+     * @param  array  $explicitArgs
      * @return array
      */
-    protected function resolve(array $bindings)
+    protected function resolve(array $bindings, array $explicitArgs = [])
     {
         $args = [];
 
         foreach ($bindings as $binding) {
+            if (isset($explicitArgs[$name = $binding->getName()])) {
+                $args[] = $explicitArgs[$name];
+
+                continue;
+            }
+
             $key = is_null($bindingClass = $binding->getClass())
-                ? $binding->getName()
+                ? $name
                 : $bindingClass->getName();
+
             try {
-                $arg = $this->get($key);
+                $args[] = $this->get($key);
             } catch (Exception $e) {
-                if (!$binding->isDefaultValueAvailable()) {
+                if (! $binding->isDefaultValueAvailable()) {
                     throw $e;
                 }
-                $arg = $binding->getDefaultValue();
+
+                $args[] = $binding->getDefaultValue();
             }
-            $args[] = $arg;
         }
 
         return $args;
@@ -238,9 +248,10 @@ class Container implements ContainerInterface, ArrayAccess
      * Resolve a class.
      *
      * @param  string  $class
-     * @return Object
+     * @param  array  $explicitArgs
+     * @return object
      */
-    protected function resolveClass($class)
+    protected function resolveClass($class, array $explicitArgs = [])
     {
         $reflectedClass = new ReflectionClass($class);
         $constructor = $reflectedClass->getConstructor();
@@ -249,7 +260,7 @@ class Container implements ContainerInterface, ArrayAccess
             return new $class;
         }
 
-        $args = $this->resolve($constructor->getParameters());
+        $args = $this->resolve($constructor->getParameters(), $explicitArgs);
 
         return $reflectedClass->newInstanceArgs($args);
     }
@@ -258,9 +269,10 @@ class Container implements ContainerInterface, ArrayAccess
      * Resolve a callable.
      *
      * @param  callable  $callable
+     * @param  array  $explicitArgs
      * @return mixed
      */
-    protected function resolveCallable(callable $callable)
+    protected function resolveCallable(callable $callable, array $explicitArgs = [])
     {
         if ($callable instanceof Closure) {
             $reflectedFunction = new ReflectionFunction($callable);
@@ -272,7 +284,7 @@ class Container implements ContainerInterface, ArrayAccess
             $reflectedFunction = $reflectedClass->getMethod('__invoke');
         }
 
-        $args = $this->resolve($reflectedFunction->getParameters());
+        $args = $this->resolve($reflectedFunction->getParameters(), $explicitArgs);
 
         return call_user_func_array($callable, $args);
     }

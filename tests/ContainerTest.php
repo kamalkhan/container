@@ -10,7 +10,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
 
     function setUp()
     {
-        vfsStream::setup('container', null, [
+        vfsStream::setup('bhittani', null, [
             'container' => [
                 'Foobar.php' =>
                     '<?php namespace Bhittani\Container\Test;
@@ -79,22 +79,28 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
                                 $this->concrete = $concrete;
                             }
                         }',
+                'MixedParams.php' =>
+                    '<?php namespace Bhittani\Container\Test;
+                        class MixedParams {
+                            function __construct(WithTwoParams $w2, $foo, $bar = null) {}
+                        }',
                 //
             ],
         ]);
 
-        require_once vfsStream::url('container/container/Foobar.php');
-        require_once vfsStream::url('container/container/WithoutConstructor.php');
-        require_once vfsStream::url('container/container/WithZeroParams.php');
-        require_once vfsStream::url('container/container/WithOneParam.php');
-        require_once vfsStream::url('container/container/WithTwoParams.php');
-        require_once vfsStream::url('container/container/WithManagedParams.php');
-        require_once vfsStream::url('container/container/WithOptionalParams.php');
-        require_once vfsStream::url('container/container/Invocable.php');
-        require_once vfsStream::url('container/container/InvocableWithParams.php');
-        require_once vfsStream::url('container/container/Contract.php');
-        require_once vfsStream::url('container/container/Concrete.php');
-        require_once vfsStream::url('container/container/ContractParam.php');
+        require_once vfsStream::url('bhittani/container/Foobar.php');
+        require_once vfsStream::url('bhittani/container/WithoutConstructor.php');
+        require_once vfsStream::url('bhittani/container/WithZeroParams.php');
+        require_once vfsStream::url('bhittani/container/WithOneParam.php');
+        require_once vfsStream::url('bhittani/container/WithTwoParams.php');
+        require_once vfsStream::url('bhittani/container/WithManagedParams.php');
+        require_once vfsStream::url('bhittani/container/WithOptionalParams.php');
+        require_once vfsStream::url('bhittani/container/Invocable.php');
+        require_once vfsStream::url('bhittani/container/InvocableWithParams.php');
+        require_once vfsStream::url('bhittani/container/Contract.php');
+        require_once vfsStream::url('bhittani/container/Concrete.php');
+        require_once vfsStream::url('bhittani/container/ContractParam.php');
+        require_once vfsStream::url('bhittani/container/MixedParams.php');
 
         $this->container = new Container;
     }
@@ -224,6 +230,25 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
         $contractParamClass = 'Bhittani\Container\Test\ContractParam';
         $contractParam = $this->container->get($contractParamClass);
         $this->assertInstanceOf($contractParamClass, $contractParam);
+    }
+
+    /** @test */
+    function it_accepts_explicit_arguments_to_resolve_an_entity()
+    {
+        $class = 'Bhittani\Container\Test\Foobar';
+        $this->assertInstanceOf($class, $this->container->get($class, ['foo' => 'bar']));
+
+        $class = 'Bhittani\Container\Test\MixedParams';
+        $this->assertInstanceOf($class, $this->container->get($class, ['foo' => 'bar']));
+
+        $closure = function (\Bhittani\Container\Test\WithTwoParams $w2, $bar = null, $foo) {
+            return $foo;
+        };
+
+        $this->container->add('baz', $closure);
+        $this->assertEquals('bar', $this->container->get('baz', ['foo' => 'bar']));
+
+        $this->assertEquals('bar', $this->container->call($closure, ['foo' => 'bar']));
     }
 
     /** @test */
