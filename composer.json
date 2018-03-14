@@ -34,11 +34,6 @@
 	},
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "config": {
-        "platform": {
-            "php": "5.5"
-        }
-    },
     "require": {
         "php": ">=5.5,<8.0-DEV"
     },
