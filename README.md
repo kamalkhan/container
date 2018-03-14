@@ -504,7 +504,7 @@ If you discover any security related issues, please email `shout@bhittani.com` i
 ## Credits
 
 - [Kamal Khan](http://bhittani.com)
-- [All Contributors][../../contributors]
+- [All Contributors](https://github.com/kamalkhan/container/contributors)
 
 ## License
 
