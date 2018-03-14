@@ -514,11 +514,11 @@ The MIT License (MIT). Please see the [License File](LICENSE.md) for more inform
 [icon-status]: https://img.shields.io/travis/kamalkhan/container.svg?style=flat-square
 [link-status]: https://travis-ci.org/kamalkhan/container
 <!--Coverage-->
-[icon-coverage]: https://example.com/icon
-[link-coverage]: https://example.com
+[icon-coverage]: https://api.codacy.com/project/badge/Coverage/5d16ae7183734381b1aa9cb7d523477a
+[link-coverage]: https://www.codacy.com/app/kamalkhan/container
 <!--Grade-->
-[icon-grade]: https://example.com/icon
-[link-grade]: https://example.com
+[icon-grade]: https://api.codacy.com/project/badge/Grade/5d16ae7183734381b1aa9cb7d523477a
+[link-grade]: https://www.codacy.com/app/kamalkhan/container
 <!--Downloads-->
 [icon-downloads]: https://img.shields.io/packagist/dt/bhittani/container.svg?style=flat-square
 [link-downloads]: https://packagist.org/packages/bhittani/container
