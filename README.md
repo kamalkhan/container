@@ -498,7 +498,7 @@ If you discover any security related issues, please email `shout@bhittani.com` i
 
 ## Inspiration
 
-- [Container](http://container.thephpleague.com)
+- [league/container](http://container.thephpleague.com)
 - [Laravel](https://laravel.com)
 
 ## Credits
