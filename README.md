@@ -8,7 +8,7 @@
 
 ======
 
-PSR-11 container implementation with dependency injection, recursive binding resolution and service provider support without any external dependencies.
+PSR-11 dependency injection container implementation with automatic resolution, service providers, facades and macros. This package does not require any external dependencies.
 
 - [Install](#install)
 - [PSR-11 Implementation](#psr-11-implementation)

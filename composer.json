@@ -1,6 +1,6 @@
 {
     "name": "bhittani/container",
-    "description": "Psr-11 dependency injection container implementation with automatic resolution, service providers, facades and macros",
+    "description": "PSR-11 dependency injection container implementation with automatic resolution, service providers, facades and macros",
     "keywords": ["dependency", "injection", "container", "di", "ioc", "psr-11", "service-provider", "facades", "macros"],
     "homepage": "https://github.com/kamalkhan/container",
     "license": "MIT",
