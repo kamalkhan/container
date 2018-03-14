@@ -29,4 +29,4 @@ script: composer check
 after_success:
     - composer coverage-clover
     - composer require codacy/coverage
-    - php vendor/bin/codacycoverage clover coverage.xml
+    - php vendor/bin/codacycoverage clover coverage.xml -t da3541629da0477295d149ef3628839f
