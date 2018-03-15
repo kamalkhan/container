@@ -11,13 +11,13 @@
 
 namespace Bhittani\Container;
 
+use Exception;
 use InvalidArgumentException;
 
 class ServiceContainer extends Container
 {
     use Macroable {
         __call as macroCall;
-        __callStatic as macroStaticCall;
     }
 
     protected $hasBooted = false;
@@ -52,22 +52,11 @@ class ServiceContainer extends Container
             return $this->get($facade);
         }
 
-        if (is_callable($facade) && method_exists($this, 'call')) {
+        if (is_callable($facade)) {
             return $this->call($facade);
         }
 
         return $facade;
-    }
-
-    public static function __callStatic($method, $parameters)
-    {
-        if ((! static::hasMacro($method))
-            && isset($this->deferredMacros[$method])
-        ) {
-            $this->promoteDeferredServiceProvider($this->deferredMacros[$method]);
-        }
-
-        return static::macroCallStatic($method, $parameters);
     }
 
     public function __call($method, $parameters)
@@ -91,7 +80,11 @@ class ServiceContainer extends Container
         $this->providers[] = $provider;
 
         if ($this->hasBooted) {
-            $this->bootServiceProvider($this->registerServiceProvider($provider));
+            $provider = $this->registerServiceProvider($provider, false, $isDeferred);
+
+            if (! $isDeferred) {
+                $this->bootServiceProvider($provider);
+            }
         }
     }
 
@@ -109,8 +102,8 @@ class ServiceContainer extends Container
 
     public function addFacades(array $facades)
     {
-        foreach ($facades as $facade) {
-            $this->addFacade($facade);
+        foreach ($facades as $key => $facade) {
+            $this->addFacade($key, $facade);
         }
     }
 
@@ -150,17 +143,17 @@ class ServiceContainer extends Container
         $this->hasBooted = true;
     }
 
-    protected function registerServiceProvider($class, $force = false)
+    protected function registerServiceProvider($class, $force = false, & $isDeferred = null)
     {
+        $isDeferred = $isDeferred ?: false;
+
         $provider = $class;
 
         if (is_string($class) && class_exists($class)) {
             $provider = $this->get($class);
         }
 
-        if ((! is_object($provider))
-            || (! $provider instanceof ServiceProviderInterface)
-        ) {
+        if (! ($provider instanceof ServiceProviderInterface)) {
             throw new InvalidArgumentException(
                 sprintf(
                     '%s is not a valid service provider',
@@ -176,7 +169,20 @@ class ServiceContainer extends Container
             return $this->registeredProviders[$class] = $provider;
         }
 
-        // Deferred bindings.
+        $isDeferred = true;
+
+        return $this->deferServiceProvider($provider);
+    }
+
+    protected function bootServiceProvider(ServiceProviderInterface $provider)
+    {
+        return $provider->boot();
+    }
+
+    protected function deferServiceProvider(ServiceProviderInterface $provider)
+    {
+        $class = get_class($provider);
+
         foreach ($provider->getBindings() as $key => $binding) {
             $this->deferredBindings[$binding] = $class;
             if (is_string($key)) {
@@ -184,17 +190,11 @@ class ServiceContainer extends Container
             }
         }
 
-        // Deferred macros.
         foreach ($provider->getMacros() as $macro) {
             $this->deferredMacros[$macro] = $class;
         }
 
         return $provider;
-    }
-
-    protected function bootServiceProvider(ServiceProviderInterface $provider)
-    {
-        return $provider->boot();
     }
 
     protected function isServiceProviderDeferred(ServiceProviderInterface $provider)
