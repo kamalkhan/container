@@ -213,6 +213,8 @@ echo $query->db instanceof FooDatabase; // true
 
 $container->add(DatabaseInterface::class, new BarDatabase);
 
+$query = $container->get(Query::class);
+
 echo $query->db instanceof BarDatabase; // true
 ```
 
