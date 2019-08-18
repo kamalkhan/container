@@ -149,7 +149,9 @@ class ServiceContainer extends Container
 
         $provider = $class;
 
-        if (is_string($class) && class_exists($class)) {
+        if (! is_string($class)) {
+            $class = get_class($class);
+        } else if (class_exists($class)) {
             $provider = $this->get($class);
         }
 
@@ -157,7 +159,7 @@ class ServiceContainer extends Container
             throw new InvalidArgumentException(
                 sprintf(
                     '%s is not a valid service provider',
-                    $provider
+                    $class
                 )
             );
         }
