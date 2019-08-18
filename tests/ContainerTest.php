@@ -2,7 +2,9 @@
 
 namespace Bhittani\Container;
 
-class ContainerTest extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class ContainerTest extends TestCase
 {
     protected $container;
 
@@ -259,14 +261,30 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /** @test */
     function it_throws_a_NotFoundException_if_key_is_not_being_managed()
     {
-        $this->setExpectedException(NotFoundException::class);
-        $this->container->get('baz');
+        try {
+            $this->container->get('baz');
+        } catch (NotFoundException $e) {
+            return $this->assertEquals(
+                'baz is not managed by the container.',
+                $e->getMessage()
+            );
+        }
+
+        $this->fail('A NotFoundException exception was not thrown.');
     }
 
     /** @test */
     function it_throws_a_BindingResolutionException_if_key_can_not_be_resolved()
     {
-        $this->setExpectedException(BindingResolutionException::class);
-        $this->container->get('Bhittani\Container\Fixtures\Foobar');
+        try {
+            $this->container->get('Bhittani\Container\Fixtures\Foobar');
+        } catch (BindingResolutionException $e) {
+            return $this->assertEquals(
+                'Failed to resolve class Bhittani\Container\Fixtures\Foobar from the container.',
+                $e->getMessage()
+            );
+        }
+
+        $this->fail('A BindingResolutionException exception was not thrown.');
     }
 }

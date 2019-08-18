@@ -2,6 +2,7 @@
 
 namespace Bhittani\Container;
 
+use PHPUnit\Framework\TestCase;
 use Bhittani\Container\Fixtures\FooService;
 use Bhittani\Container\Fixtures\FooServiceProvider;
 use Bhittani\Container\Fixtures\DeferredMacroServiceProvider;
@@ -10,7 +11,7 @@ use Bhittani\Container\Fixtures\DeferredBindingServiceProvider;
 
 $container = null; $booted = $registered = 0;
 
-class ServiceContainerTest extends \PHPUnit_Framework_TestCase
+class ServiceContainerTest extends TestCase
 {
     protected $container;
 
