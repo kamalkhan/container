@@ -42,6 +42,13 @@ class Container implements ContainerInterface, ArrayAccess
     protected $delegates = [];
 
     /**
+     * Ignore delegated items.
+     *
+     * @var array[string]
+     */
+    protected $ignoreInDelegates = [];
+
+    /**
      * Resolve an entry by key.
      *
      * @param  string $key
@@ -327,6 +334,10 @@ class Container implements ContainerInterface, ArrayAccess
      */
     protected function find($key, & $found = false, $unset = false)
     {
+        if ($unset && ! in_array($key, $this->ignoreInDelegates)) {
+            $this->ignoreInDelegates[] = $key;
+        }
+
         if (array_key_exists($key, $this->items)) {
             $found = true;
             if ($unset) {
@@ -336,20 +347,16 @@ class Container implements ContainerInterface, ArrayAccess
             return $this->items[$key];
         }
 
-        // $delegateFound = false;
-
-        foreach ($this->delegates as $delegate) {
-            $entity = $delegate->find($key, $found, $unset);
-            if ($found) {
-                // To use as stack pop
-                // return $entity;
-                if (!$unset) {
-                    return $entity;
-                }
-                // $delegateFound = true;
-            }
+        if (in_array($key, $this->ignoreInDelegates)) {
+            $found = false;
+            return;
         }
 
-        // $found = $delegateFound;
+        foreach ($this->delegates as $delegate) {
+            if ($delegate->has($key)) {
+                $found = true;
+                return $delegate->get($key);
+            }
+        }
     }
 }
