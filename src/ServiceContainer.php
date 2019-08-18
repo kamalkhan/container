@@ -151,7 +151,7 @@ class ServiceContainer extends Container
 
         if (! is_string($class)) {
             $class = get_class($class);
-        } else if (class_exists($class)) {
+        } elseif (class_exists($class)) {
             $provider = $this->get($class);
         }
 
