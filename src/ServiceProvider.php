@@ -13,8 +13,8 @@ namespace Bhittani\Container;
 
 use Psr\Container\ContainerInterface;
 
-abstract class ServiceProvider
-    implements ServiceProviderInterface,
+abstract class ServiceProvider implements
+    ServiceProviderInterface,
         BootableServiceProviderInterface,
         DeferrableServiceProviderInterface
 {
@@ -32,25 +32,25 @@ abstract class ServiceProvider
      */
     protected $provides = [];
 
-    /** @inheritDoc */
+    /** {@inheritdoc} */
     public function boot(ContainerInterface $container)
     {
         // Extended classes may implement this method.
     }
 
-    /** @inheritDoc */
+    /** {@inheritdoc} */
     public function register(ContainerInterface $container)
     {
         // Extended classes may implement this method.
     }
 
-    /** @inheritDoc */
+    /** {@inheritdoc} */
     public function getBindings()
     {
         return $this->provides;
     }
 
-    /** @inheritDoc */
+    /** {@inheritdoc} */
     public function getMacros()
     {
         return $this->macros;
