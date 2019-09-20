@@ -1,30 +1,27 @@
 # PSR-11 Container
 
 [![Travis Build Status][icon-status]][link-status]
-[![Codacy Coverage][icon-coverage]][link-coverage]
-[![Codacy Grade][icon-grade]][link-grade]
 [![Packagist Downloads][icon-downloads]][link-downloads]
 [![License][icon-license]](LICENSE.md)
-
-======
 
 PSR-11 dependency injection container implementation with automatic resolution, service providers, facades and macros. This package does not require any external dependencies.
 
 - [Install](#install)
-- [PSR-11 Implementation](#psr-11-implementation)
-- [Container](#container)
-- [Binding resolution](#binding-resolution)
-- [Automatic dependency resolution](#automatic-dependency-resolution)
-- [Interface resolution](#interface-resolution)
-- [Callable resolution](#callable-resolution)
-- [Custom parameter resolution](#custom-parameter-resolution)
-- [Factory bindings](#factory-bindings)
-- [Shared bindings](#shared-bindings)
-- [Delegates](#delegates)
-- [Service providers](#service-providers)
-- [Facades](#facades)
-- [Macros](#macros)
-- [Deferred Service Providers](#deferred-service-providers)
+- [Usage](#usage)
+  - [PSR-11 Implementation](#psr-11-implementation)
+  - [Container](#container)
+  - [Binding resolution](#binding-resolution)
+  - [Automatic dependency resolution](#automatic-dependency-resolution)
+  - [Interface resolution](#interface-resolution)
+  - [Callable resolution](#callable-resolution)
+  - [Custom parameter resolution](#custom-parameter-resolution)
+  - [Factory bindings](#factory-bindings)
+  - [Shared bindings](#shared-bindings)
+  - [Delegates](#delegates)
+  - [Service providers](#service-providers)
+  - [Facades](#facades)
+  - [Macros](#macros)
+  - [Deferred Service Providers](#deferred-service-providers)
 - [Changelog](#changelog)
 - [Testing](#testing)
 - [Contributing](#contributing)
@@ -38,19 +35,20 @@ PSR-11 dependency injection container implementation with automatic resolution, 
 You may install this package using [composer][link-composer].
 
 ```shell
-$ composer require bhittani/container
+$ composer require bhittani/container --prefer-dist
 ```
 
-## PSR-11 Implementation
+## Usage
+
+### PSR-11 Implementation
 
 This package implements the [PSR-11](https://github.com/php-fig/container) container interface, hence, you can easily swap any existing implementation with the container provided in this package.
 
-## Container
+### Container
 
 In its simplest form, the container stores key value pairs so that it can be accessed later during your application life cycle.
 
 ```php
-
 <?php
 
 require_once __DIR__ . '/vendor/autload.php';
@@ -60,22 +58,20 @@ $container = new \Bhittani\Container\Container;
 $container->add('foo', 'bar');
 
 echo $container->get('foo'); // 'bar'
-
 ```
 
-## Binding resolution
+### Binding resolution
 
 Practically, a dependency injection container is more useful by storing class factories/instances so that they are automatically resolved.
 
 ```php
-
 <?php
 
 require_once __DIR__ . '/vendor/autload.php';
 
 class FooDatabase
 {
-	// ...
+    // ...
 }
 
 $container = new Bhittani\Container\Container;
@@ -90,24 +86,23 @@ The key being used `FooDatabase` is significant. This key will act as a look-up 
 Still confused? Lets take a closer look at a practical example.
 
 ```php
-
 <?php
 
 require_once __DIR__ . '/vendor/autload.php';
 
 class FooDatabase
 {
-	// ...
+    // ...
 }
 
 class Query
 {
-	protected $db;
+    protected $db;
 
-	public function __construct(FooDatabase $db)
-	{
-		$this->db = $db;
-	}
+    public function __construct(FooDatabase $db)
+    {
+      $this->db = $db;
+    }
 }
 
 $container = new Bhittani\Container\Container;
@@ -119,7 +114,7 @@ $query = $container->get(Query::class); // Query
 
 Here, `$db` is automatically resolved by the container as it is type hinted with the 'FooDatabase' class which the container is aware of.
 
-## Automatic dependency resolution
+### Automatic dependency resolution
 
 Binding resolution is all handy and dandy but we can do much better and improve on our first iteration.
 
@@ -130,24 +125,23 @@ This means, we should also be able to resolve the `FooDatabase` class implicitly
 Let's apply our first refactor.
 
 ```php
-
 <?php
 
 require_once __DIR__ . '/vendor/autload.php';
 
 class FooDatabase
 {
-	// ...
+    // ...
 }
 
 class Query
 {
-	protected $db;
+    protected $db;
 
-	public function __construct(FooDatabase $db)
-	{
-		$this->db = $db;
-	}
+    public function __construct(FooDatabase $db)
+    {
+        $this->db = $db;
+    }
 }
 
 $container = new Bhittani\Container\Container;
@@ -168,39 +162,38 @@ When you call the `get` method on the container,
 
 > A binding will take precedence over a new instantiation.
 
-## Interface resolution
+### Interface resolution
 
 Wouldn't it be nice if we could implement to an interface so that we could easily swap the underlying implementation?
 
 ```php
-
 <?php
 
 require_once __DIR__ . '/vendor/autload.php';
 
 interface DatabaseInterface
 {
-	// ...
+    // ...
 }
 
 class FooDatabase implements DatabaseInterface
 {
-	// ...
+    // ...
 }
 
 class BarDatabase implements DatabaseInterface
 {
-	// ...
+    // ...
 }
 
 class Query
 {
-	public $db;
-
-	public function __construct(DatabaseInterface $db)
-	{
-		$this->db = $db;
-	}
+    public $db;
+    
+    public function __construct(DatabaseInterface $db)
+    {
+        $this->db = $db;
+    }
 }
 
 $container = new Bhittani\Container\Container;
@@ -220,7 +213,7 @@ echo $query->db instanceof BarDatabase; // true
 
 We have easily swapped the underlying database implementation from `FooDatabase` to `BarDatabase`.
 
-## Callable resolution
+### Callable resolution
 
 To resolve a callable/closure, we can invoke it directly.
 
@@ -229,15 +222,15 @@ $container = new Bhittani\Container\Container;
 
 class Acme
 {
-	// ...
+    // ...
 }
 
 $container->call(function (Acme $acme) {
-	echo $acme instanceof Acme; // true
+    echo $acme instanceof Acme; // true
 });
 ```
 
-## Custom parameter resolution
+### Custom parameter resolution
 
 We can resolve entities that require custom arguments in two ways.
 
@@ -245,15 +238,14 @@ We can resolve entities that require custom arguments in two ways.
 2. Passing explicit arguments.
 
 ```php
-
 class Acme
 {
-	public $foo;
-
-	public function __construct($foo)
-	{
-		$this->foo = $foo;
-	}
+    public $foo;
+    
+    public function __construct($foo)
+    {
+        $this->foo = $foo;
+    }
 }
 
 $container = new Bhittani\Container\Container;
@@ -271,38 +263,37 @@ echo $acme->foo; // baz
 
 > Explicit arguments will take precedence over bindings.
 
-## Factory bindings
+### Factory bindings
 
 Factory bindings allow lazy loading of your instances. Which means that resolution will only occur when it is needed.
 
 ```php
-
 <?php
 
 require_once __DIR__ . '/vendor/autload.php';
 
 interface DatabaseInterface
 {
-	// ...
+    // ...
 }
 
 class FooDatabase implements DatabaseInterface
 {
-	// ...
+    // ...
 }
 
 class Query
 {
-	public function __construct(DatabaseInterface $db)
-	{
-		// ...
-	}
+    public function __construct(DatabaseInterface $db)
+    {
+        // ...
+    }
 }
 
 $container = new Bhittani\Container\Container;
 
 $container->add(DatabaseInterface::class, function () {
-	return new FooDatabase;
+    return new FooDatabase;
 });
 
 $query = $container->get(Query::class); // will trigger the factory closure above.
@@ -310,7 +301,7 @@ $query = $container->get(Query::class); // will trigger the factory closure abov
 
 This way, you can add as many bindings as you want in your container but only trigger/resolve them when needed. Hence, lazy loaded.
 
-## Shared bindings
+### Shared bindings
 
 Shared bindings allow the same instance to be resolved when accessed instead of a new instance every time it is needed.
 
@@ -322,16 +313,16 @@ $container->add(DatabaseInterface::class, new FooDatabase);
 
 // This will be shared as we are using the method 'share' explicitly.
 $container->share(DatabaseInterface::class, function () {
-	return new FooDatabase;
+    return new FooDatabase;
 });
 
 // This will NOT be shared as we are using a factory.
 $container->add(DatabaseInterface::class, function () {
-	return new FooDatabase;
+    return new FooDatabase;
 });
 ```
 
-## Delegates
+### Delegates
 
 Delegated containers serve as fallback containers that are looked-up for binding resolutions when it can not be found in the container.
 
@@ -351,7 +342,7 @@ $container->delegate($delegateContainer);
 $container->has('foo'); // true
 ```
 
-## Service providers
+### Service providers
 
 This package also ships with a service provider container which allows registering of service providers (Think of [laravel](https://laravel.com) service providers) in order to have a smooth and easy application development process.
 
@@ -363,17 +354,17 @@ use Bhittani\Container\AbstractServiceProvider;
 
 class DatabaseServiceProvider extends AbstractServiceProvider
 {
-	public function boot()
-	{
-		// This method will be called when all service providers are registered.
-	}
-
-	public function register()
-	{
-		$this->container->share(DatabaseInterface::class, function () {
-			return new SqliteDatabase;
-		});
-	}
+    public function boot()
+    {
+        // This method will be called when all service providers are registered.
+    }
+    
+    public function register()
+    {
+        $this->container->share(DatabaseInterface::class, function () {
+            return new SqliteDatabase;
+        });
+    }
 }
 
 $container = new ServiceContainer;
@@ -385,10 +376,9 @@ $container->bootstrap();
 $db = $container->get(DatabaseInterface::class);
 
 echo $db instanceof SqliteDatabase; // true
-
 ```
 
-## Facades
+### Facades
 
 Facades extend the container by assigning custom properties onto the service container. When accessed, it will be resolved out of the service container.
 
@@ -398,7 +388,7 @@ use Bhittani\Container\ServiceContainer;
 $container = new ServiceContainer;
 
 $container->share(DatabaseInterface::class, function () {
-	return new SqliteDatabase;
+    return new SqliteDatabase;
 });
 
 $container->db = DatabaseInterface::class;
@@ -406,7 +396,7 @@ $container->db = DatabaseInterface::class;
 echo $container->db instanceof SqliteDatabase; // true
 ```
 
-## Macros
+### Macros
 
 Macros extend the container by assigning custom methods onto the service container.
 
@@ -416,18 +406,18 @@ use Bhittani\Container\ServiceContainer;
 $container = new ServiceContainer;
 
 $container->share(DatabaseInterface::class, function () {
-	return new SqliteDatabase;
+    return new SqliteDatabase;
 });
 
 $container->macro('query', function ($sql) {
-	// $this will be assigned to the underlying ServiceContainer.
-	return $this->get(DatabaseInterface::class)->query($sql);
+    // The underlying ServiceContainer will be assigned to $this.
+    return $this->get(DatabaseInterface::class)->query($sql);
 });
 
 echo $container->query('SELECT * FROM users'); // Invokes the 'query' macro.
 ```
 
-## Deferred Service Providers
+### Deferred Service Providers
 
 Service providers can be deferred so that services can be lazy loaded.
 
@@ -437,31 +427,28 @@ use Bhittani\Container\AbstractServiceProvider;
 
 class DatabaseServiceProvider extends AbstractServiceProvider
 {
-	// A non empty $provides array will defer this service provider.
-	protected $provides = [
-		DatabaseInterface::class,
-		// If setting a facade, use the facade key as the index.
-		// 'db' => DatabaseInterface::class,
-	];
+    // A non empty $provides array will defer this service provider.
+    protected $provides = [
+        DatabaseInterface::class,
+        // If setting a facade, use the facade key as the index.
+        // 'db' => DatabaseInterface::class,
+    ];
 
-	// A non empty $macros array will defer this service provider as well.
-	protected $macros = [
-		'query',
-	];
+    // A non empty $macros array will defer this service provider as well.
+    protected $macros = [
+        'query',
+    ];
 
-	public function register()
-	{
-		$this->container->share(DatabaseInterface::class, function () {
-			return new SqliteDatabase;
-		});
+    public function register()
+    {
+        $this->container->share(DatabaseInterface::class, function () {
+            return new SqliteDatabase;
+        });
 
-		// If you also need a facade
-		// $this->container->db = DatabaseInterface::class;
-
-		$container->macro('query', function ($sql) {
-			return $this->get(DatabaseInterface::class)->query($sql);
-		});
-	}
+        $container->macro('query', function ($sql) {
+            return $this->get(DatabaseInterface::class)->query($sql);
+        });
+    }
 }
 
 $container = new ServiceContainer;
@@ -469,9 +456,6 @@ $container = new ServiceContainer;
 $container->addServiceProvider(DatabaseServiceProvider::class);
 
 $container->bootstrap();
-
-// The register and boot method of the service provider isn't called yet.
-echo $container->hasMacro('query'); // false
 
 // This will register and boot the service provider.
 $container->query('SELECT * FROM users');
@@ -485,9 +469,13 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed.
 ## Testing
 
 ```shell
-$ git clone https://github.com/kamalkhan/container
-$ composer install
-$ composer test
+git clone https://github.com/kamalkhan/container
+
+cd container
+
+composer install
+
+composer test
 ```
 
 ## Contributing
@@ -515,12 +503,6 @@ The MIT License (MIT). Please see the [License File](LICENSE.md) for more inform
 <!--Status-->
 [icon-status]: https://img.shields.io/travis/kamalkhan/container.svg?style=flat-square
 [link-status]: https://travis-ci.org/kamalkhan/container
-<!--Coverage-->
-[icon-coverage]: https://api.codacy.com/project/badge/Coverage/5d16ae7183734381b1aa9cb7d523477a
-[link-coverage]: https://www.codacy.com/app/kamalkhan/container
-<!--Grade-->
-[icon-grade]: https://api.codacy.com/project/badge/Grade/5d16ae7183734381b1aa9cb7d523477a
-[link-grade]: https://www.codacy.com/app/kamalkhan/container
 <!--Downloads-->
 [icon-downloads]: https://img.shields.io/packagist/dt/bhittani/container.svg?style=flat-square
 [link-downloads]: https://packagist.org/packages/bhittani/container

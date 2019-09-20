@@ -1,6 +1,6 @@
 {
     "name": "bhittani/container",
-    "description": "PSR-11 dependency injection container implementation with automatic resolution, service providers, facades and macros",
+    "description": "PSR-11 dependency injection container implementation with automatic resolution, service providers, facades and macros.",
     "keywords": ["dependency", "injection", "container", "di", "ioc", "psr-11", "service-provider", "facades", "macros"],
     "homepage": "https://github.com/kamalkhan/container",
     "license": "MIT",
@@ -44,22 +44,13 @@
         "psr/container": "^1.0"
     },
     "require-dev": {
-        "doctrine/instantiator": "^1.0",
-        "phpdocumentor/reflection-docblock": "^3.3",
-        "phpunit/phpunit": "<8",
-        "squizlabs/php_codesniffer": "^3.4"
+        "phpunit/phpunit": "<8"
     },
     "provide": {
         "psr/container-implementation": "1.0.0"
     },
     "scripts": {
-        "test": "phpunit --colors=always",
-        "coverage": "phpunit --colors=always --coverage-text",
-        "coverage-html": "phpunit --colors=always --coverage-html coverage",
-        "coverage-clover": "phpunit --colors=always --coverage-clover coverage.xml",
-        "cs-check": "phpcs --standard=PSR2 src",
-        "cs-fix": "phpcbf --standard=PSR2 src",
-        "check": ["@cs-check", "@test"]
+        "test": "phpunit --colors=always"
     },
     "repositories": [
         { "packagist": false },

@@ -13,15 +13,12 @@ namespace Bhittani\Container;
 
 use Psr\Container\ContainerInterface;
 
-interface ContainerAwareInterface
+interface BootableServiceProviderInterface extends ServiceProviderInterface
 {
     /**
-     * @return ContainerInterface
+     * Bootstrap the service.
+     *
+     * @param ContainerInterface $container
      */
-    public function getContainer();
-
-    /**
-     * @param  ContainerInterface $container
-     */
-    public function setContainer(ContainerInterface $container);
+    public function boot(ContainerInterface $container);
 }

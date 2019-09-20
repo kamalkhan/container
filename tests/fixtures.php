@@ -2,7 +2,8 @@
 
 namespace Bhittani\Container\Fixtures;
 
-use Bhittani\Container\AbstractServiceProvider;
+use Psr\Container\ContainerInterface;
+use Bhittani\Container\ServiceProvider;
 
 class Foobar {
     function __construct($foo) {}
@@ -27,8 +28,8 @@ class WithManagedParams {
 }
 
 class WithOptionalParams {
-    public $a;
-    function __construct(WithTwoParams $w2, $a = "b") {
+    var $a;
+    function __construct(WithTwoParams $w2, $a = 'b') {
         $this->a = $a;
     }
 }
@@ -63,59 +64,59 @@ class MixedParams {
     function __construct(WithTwoParams $w2, $foo, $bar = null) {}
 }
 
-
 // Serviceable
 
 class FooService {}
 
-class FooServiceProvider extends AbstractServiceProvider {
-    public function boot() {
-        global $booted;
-        $booted++;
+class TestServiceProvider extends ServiceProvider {
+    static $calls = [];
+    function boot(ContainerInterface $container) {
+        static::$calls[] = 'boot:'.static::class;
     }
-    public function register() {
-        global $container, $registered;
-        $container = $this->container;
-        $registered++;
+    function register(ContainerInterface $container) {
+        static::$calls[] = 'register:'.static::class;
     }
 }
 
-class DeferredBindingServiceProvider extends AbstractServiceProvider {
-    protected $provides = [FooService::class];
-    public function boot() {
-        global $booted;
-        $booted++;
+class FooServiceProvider extends TestServiceProvider {}
+
+class BarServiceProvider extends TestServiceProvider {}
+
+class DeferredBindingServiceProvider extends ServiceProvider {
+    static $booted = 0;
+    static $registered = 0;
+    var $provides = ['foo'];
+    function boot(ContainerInterface $container) {
+        static::$booted++;
     }
-    public function register() {
-        global $container, $registered;
-        $container = $this->container;
-        $registered++;
+    function register(ContainerInterface $container) {
+        static::$registered++;
+        $container->add('foo', 'bar');
     }
 }
 
-class DeferredFacadeServiceProvider extends AbstractServiceProvider {
-    protected $provides = ['foo' => FooService::class];
-    public function boot() {
-        global $booted;
-        $booted++;
+class DeferredFacadeServiceProvider extends ServiceProvider {
+    static $booted = 0;
+    static $registered = 0;
+    var $provides = ['foo' => 'foo'];
+    public function boot(ContainerInterface $container) {
+        static::$booted++;
     }
-    public function register() {
-        global $container, $registered;
-        $container = $this->container;
-        $registered++;
+    public function register(ContainerInterface $container) {
+        static::$registered++;
+        $container->add('foo', 'bar');
     }
 }
 
-class DeferredMacroServiceProvider extends AbstractServiceProvider {
-    protected $macros = ['foo'];
-    public function boot() {
-        global $booted;
-        $booted++;
+class DeferredMacroServiceProvider extends ServiceProvider {
+    static $booted = 0;
+    static $registered = 0;
+    var $macros = ['foo'];
+    public function boot(ContainerInterface $container) {
+        static::$booted++;
     }
-    public function register() {
-        global $container, $registered;
-        $container = $this->container;
-        $registered++;
+    public function register(ContainerInterface $container) {
+        static::$registered++;
         $container->macro('foo', function ($foo) {
             return $foo;
         });

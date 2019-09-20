@@ -16,106 +16,89 @@ use ReflectionClass;
 use ReflectionMethod;
 use BadMethodCallException;
 
-/**
- * @see https://github.com/illuminate/support/blob/master/Traits/Macroable.php
- * @see https://github.com/spatie/macroable
- */
-
 trait Macroable
 {
-    protected static $macros = [];
+    /**
+     * Macros.
+     *
+     * @var callable[]
+     */
+    protected $macros = [];
 
     /**
-     * Call a defined macro as static.
+     * Call a macro.
      *
-     * @param string       $method
-     * @param array[mixed] $parameters
+     * @param string  $method
+     * @param mixed[] $arguments
+     *
+     * @return mixed
      */
-    public static function __callStatic($method, $parameters)
+    public function __call($name, array $arguments)
     {
-        if (! static::hasMacro($method)) {
-            throw new BadMethodCallException(
-                sprintf(
-                    'Method %s::%s does not exist.',
-                    static::class,
-                    $method
-                )
-            );
+        if ($this->hasMacro($name)) {
+            $macro = $this->macros[$name];
+
+            if ($macro instanceof Closure) {
+                $macro->bindTo($this);
+            }
+
+            return $macro(...$arguments);
         }
 
-        if (static::$macros[$method] instanceof Closure) {
-            return call_user_func_array(
-                Closure::bind(static::$macros[$method], null, static::class),
-                $parameters
-            );
-        }
-
-        return call_user_func_array(static::$macros[$method], $parameters);
+        throw new BadMethodCallException(sprintf(
+            'Call to undefined method %s::%s().',
+            static::class,
+            $name
+        ));
     }
 
     /**
-     * Call a defined macro.
-     *
-     * @param string       $method
-     * @param array[mixed] $parameters
-     */
-    public function __call($method, $parameters)
-    {
-        if (! static::hasMacro($method)) {
-            throw new BadMethodCallException(
-                sprintf(
-                    'Method %s::%s does not exist.',
-                    static::class,
-                    $method
-                )
-            );
-        }
-
-        $macro = static::$macros[$method];
-
-        if ($macro instanceof Closure) {
-            return call_user_func_array($macro->bindTo($this, static::class), $parameters);
-        }
-
-        return call_user_func_array($macro, $parameters);
-    }
-
-    /**
-     * Register a custom macro.
-     *
-     * @param string          $name
-     * @param object|callable $macro
-     */
-    public static function macro($name, $macro)
-    {
-        static::$macros[$name] = $macro;
-    }
-
-    /**
-     * Mix another object into the class.
-     *
-     * @param object $mixin
-     */
-    public static function mixin($mixin)
-    {
-        $methods = (new ReflectionClass($mixin))->getMethods(
-            ReflectionMethod::IS_PUBLIC | ReflectionMethod::IS_PROTECTED
-        );
-
-        foreach ($methods as $method) {
-            $method->setAccessible(true);
-
-            static::macro($method->name, $method->invoke($mixin));
-        }
-    }
-
-    /**
-     * Checks whether the given macro is available.
+     * Tell whether the given macro exists.
      *
      * @param string $name
+     *
+     * @return bool
      */
-    public static function hasMacro($name)
+    public function hasMacro($name)
     {
-        return isset(static::$macros[$name]);
+        return isset($this->macros[$name]);
+    }
+
+    /**
+     * Bind a macro.
+     *
+     * @param string $name
+     * @param callable $macro
+     *
+     * @return $this
+     */
+    public function macro($name, callable $macro)
+    {
+        $this->macros[$name] = $macro;
+
+        return $this;
+    }
+
+    /**
+     * Mix methods of another object into the class as macros.
+     *
+     * @param object $mixin
+     *
+     * @return $this
+     */
+    public function mixin($mixin, $override = true)
+    {
+        $methods = (new ReflectionClass($mixin))
+            ->getMethods(ReflectionMethod::IS_PUBLIC);
+
+        foreach ($methods as $method) {
+            $name = $method->getName();
+
+            if (! $this->hasMacro($name) || $override) {
+                $this->macro($name, [$mixin, $name]);
+            }
+        }
+
+        return $this;
     }
 }

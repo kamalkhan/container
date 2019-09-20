@@ -16,69 +16,82 @@ use Exception;
 use ArrayAccess;
 use ReflectionClass;
 use ReflectionFunction;
+use ReflectionParameter;
 use Psr\Container\ContainerInterface;
 
 class Container implements ContainerInterface, ArrayAccess
 {
+    use Macroable;
+
     /**
      * Items.
      *
-     * @var array[mixed]
+     * @var mixed[]
      */
     protected $items = [];
 
     /**
      * Shared keys.
      *
-     * @var array[string]
+     * @var string[]
      */
     protected $shared = [];
 
     /**
+     * Aliases.
+     *
+     * @var string[]
+     */
+    protected $aliases = [];
+
+    /**
      * Delegations.
      *
-     * @var array[ContainerInterface]
+     * @var ContainerInterface[]
      */
     protected $delegates = [];
 
     /**
      * Ignore delegated items.
      *
-     * @var array[string]
+     * @var string[]
      */
     protected $ignoreInDelegates = [];
 
     /**
-     * Resolve an entry by key.
+     * Get an item.
      *
      * @param  string $key
-     * @param  array  $explicitArgs
-     * @throws NotFoundException Entry not found.
-     * @throws BindingResolutionException Entry can not be resolved.
+     * @param  array  $arguments
+     *
+     * @throws NotFoundException if the key is not managed by the container.
+     * @throws BindingResolutionException if a binding can not be resolved from the container.
+     *
      * @return mixed
      */
-    public function get($key, array $explicitArgs = [])
+    public function get($key, array $arguments = [])
     {
-        $entity = $this->find($key, $found);
+        if (isset($this->aliases[$key])) {
+            return $this->get($this->aliases[$key]);
+        }
 
-        if ($found) {
-            if (is_callable($entity)) {
-                try {
-                    $entity = $this->resolveCallable($entity, $explicitArgs);
-                } catch (Exception $e) {
-                    throw new BindingResolutionException(
-                        sprintf(
-                            'Failed to resolve callable %s while resolving %s from the container.',
-                            get_class($entity),
-                            $key
-                        ),
-                        1,
-                        $e
-                    );
-                }
-                if (is_string($key) && in_array($key, $this->shared)) {
-                    $this->items[$key] = $entity;
-                }
+        $entity = $this->find($key);
+
+        if ($entity) {
+            if (! $entity instanceof Closure) {
+                return $entity;
+            }
+
+            try {
+                $entity = $this->resolveCallable($entity, $arguments);
+            } catch (Exception $e) {
+                throw new BindingResolutionException(
+                    "Failed to resolve {$key} from the container.", 0, $e
+                );
+            }
+
+            if (in_array($key, $this->shared)) {
+                $this->items[$key] = $entity;
             }
 
             return $entity;
@@ -86,35 +99,18 @@ class Container implements ContainerInterface, ArrayAccess
 
         if (class_exists($key)) {
             try {
-                $entity = $this->resolveClass($key, $explicitArgs);
+                return $this->resolveClass($key, $arguments);
             } catch (Exception $e) {
-                throw new BindingResolutionException(
-                    sprintf(
-                        'Failed to resolve class %s from the container.',
-                        $key
-                    ),
-                    1,
-                    $e
-                );
+                throw new NotFoundException("Failed to resolve class {$key}.", 0, $e);
             }
-
-            return $entity;
         }
 
         if (interface_exists($key)) {
-            throw new BindingResolutionException(
-                sprintf(
-                    'Failed to resolve interface %s from the container.',
-                    $key
-                )
-            );
+            throw new NotFoundException("Failed to resolve interface {$key}.");
         }
 
         throw new NotFoundException(
-            sprintf(
-                '%s is not managed by the container.',
-                $key
-            )
+            "{$key} is not managed by the container."
         );
     }
 
@@ -122,57 +118,111 @@ class Container implements ContainerInterface, ArrayAccess
      * Resolve a callable.
      *
      * @param  callable $callable
-     * @param  array    $explicitArgs
+     * @param  array    $arguments
+     *
      * @throws BindingResolutionException Entry can not be resolved.
+     *
      * @return mixed
      */
-    public function call(callable $callable, array $explicitArgs = [])
+    public function call(callable $callable, array $arguments = [])
     {
-        return $this->resolveCallable($callable, $explicitArgs);
+        return $this->resolveCallable($callable, $arguments);
     }
 
     /**
-     * Check whether an entry for a key exists.
+     * Tell whether an item exists.
      *
      * @param  string $key
-     * @return boolean
+     *
+     * @return bool
      */
     public function has($key)
     {
-        $this->find($key, $has);
+        if (isset($this->aliases[$key])) {
+            $key = $this->aliases[$key];
+        }
 
-        return (bool) $has;
+        return (bool) $this->find($key);
     }
 
     /**
-     * Add an entry.
+     * Add an item.
      *
      * @param  string $key
      * @param  mixed  $value
-     * @return $this
+     *
+     * @return Container
      */
     public function add($key, $value)
     {
+        $this->remove($key);
         $this->items[$key] = $value;
-
-        $this->shared = array_diff($this->shared, [$key]);
 
         return $this;
     }
 
     /**
-     * Add a shared entry.
+     * Add a shared item.
      *
      * @param  string $key
      * @param  mixed  $value
-     * @return $this
+     *
+     * @return Container
      */
     public function share($key, $value)
     {
-        $this->items[$key] = $value;
+        $this->add($key, $value);
+        $this->shared[] = $key;
 
-        if (!in_array($key, $this->shared)) {
-            $this->shared[] = $key;
+        return $this;
+    }
+
+    /**
+     * Add a singleton.
+     *
+     * @param  string $key
+     * @param  mixed  $value
+     *
+     * @return Container
+     */
+    public function singleton($key, $value)
+    {
+        return $this->share($key, $value);
+    }
+
+    /**
+     * Alias an item.
+     *
+     * @param string|array $aliases
+     * @param string $actual
+     *
+     * @return Container
+     */
+    public function alias($aliases, $actual)
+    {
+        foreach ((array) $aliases as $alias) {
+            $this->remove($alias);
+            $this->aliases[$alias] = $actual;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Remove an item.
+     *
+     * @param string $key
+     *
+     * @return Container
+     */
+    public function remove($key)
+    {
+        unset($this->items[$key]);
+
+        $this->shared = array_diff($this->shared, [$key]);
+
+        if (! in_array($key, $this->ignoreInDelegates)) {
+            $this->ignoreInDelegates[] = $key;
         }
 
         return $this;
@@ -182,7 +232,8 @@ class Container implements ContainerInterface, ArrayAccess
      * Add a delegation.
      *
      * @param  ContainerInterface $container
-     * @return $this
+     *
+     * @return Container
      */
     public function delegate(ContainerInterface $container)
     {
@@ -196,24 +247,32 @@ class Container implements ContainerInterface, ArrayAccess
      *
      * @param  string $offset
      * @param  mixed  $value
+     *
      * @return mixed
      */
     public function offsetSet($offset, $value)
     {
         if (is_null($offset)) {
-            $this->items[] = $value;
-        } else {
-            $this->items[$offset] = $value;
+            $indexes = array_filter($this->items, function ($key) {
+                return is_int($key);
+            }, ARRAY_FILTER_USE_KEY);
+
+            rsort($indexes);
+
+            $offset = array_shift($indexes) ?: 0;
         }
+
+        $this->add($offset, $value);
 
         return $value;
     }
 
     /**
-     * ArrayAccess: alias of has.
+     * ArrayAccess: Alias of has.
      *
      * @param  string $offset
-     * @return boolean
+     *
+     * @return bool
      */
     public function offsetExists($offset)
     {
@@ -221,20 +280,20 @@ class Container implements ContainerInterface, ArrayAccess
     }
 
     /**
-     * ArrayAccess: unset a key binding.
+     * ArrayAccess: Alias of remove.
      *
      * @param  string $offset
-     * @return void
      */
     public function offsetUnset($offset)
     {
-        $this->find($offset, $found, true);
+        $this->remove($offset);
     }
 
     /**
-     * ArrayAccess: alias of get.
+     * ArrayAccess: Alias of get.
      *
      * @param  string $offset
+     *
      * @return mixed
      */
     public function offsetGet($offset)
@@ -243,20 +302,22 @@ class Container implements ContainerInterface, ArrayAccess
     }
 
     /**
-     * Resolve parameter bindings from the container.
+     * Resolve parameter bindings.
      *
-     * @param  array $bindings
-     * @param  array $explicitArgs
-     * @throws BindingResolutionException Entry can not be resolved.
-     * @return array
+     * @param  ReflectionParameter[] $bindings
+     * @param  mixed[] $arguments
+     *
+     * @throws NotFoundException If the bindings can not be resolved.
+     *
+     * @return mixed[]
      */
-    protected function resolve(array $bindings, array $explicitArgs = [])
+    protected function resolve(array $bindings, array $arguments = [])
     {
         $args = [];
 
         foreach ($bindings as $binding) {
-            if (isset($explicitArgs[$name = $binding->getName()])) {
-                $args[] = $explicitArgs[$name];
+            if (isset($arguments[$name = $binding->getName()])) {
+                $args[] = $arguments[$name];
 
                 continue;
             }
@@ -283,79 +344,55 @@ class Container implements ContainerInterface, ArrayAccess
      * Resolve a class.
      *
      * @param  string $class
-     * @param  array  $explicitArgs
+     * @param  mixed[]  $arguments
+     *
      * @return object
      */
-    protected function resolveClass($class, array $explicitArgs = [])
+    protected function resolveClass($class, array $arguments = [])
     {
         $reflectedClass = new ReflectionClass($class);
         $constructor = $reflectedClass->getConstructor();
 
-        if (is_null($constructor)) {
-            return new $class;
-        }
-
-        $args = $this->resolve($constructor->getParameters(), $explicitArgs);
-
-        return $reflectedClass->newInstanceArgs($args);
+        return is_null($constructor) ? new $class : $reflectedClass->newInstanceArgs(
+            $this->resolve($constructor->getParameters(), $arguments)
+        );
     }
 
     /**
      * Resolve a callable.
      *
      * @param  callable $callable
-     * @param  array    $explicitArgs
+     * @param  mixed[]    $arguments
+     *
      * @return mixed
      */
-    protected function resolveCallable(callable $callable, array $explicitArgs = [])
+    protected function resolveCallable(callable $callable, array $arguments = [])
     {
-        if ($callable instanceof Closure) {
-            $reflectedFunction = new ReflectionFunction($callable);
-        } else {
-            $reflectedClass = new ReflectionClass($callable);
-            if (!$reflectedClass->hasMethod('__invoke')) {
-                return $callable;
-            }
-            $reflectedFunction = $reflectedClass->getMethod('__invoke');
-        }
+        $reflectedFunction = (is_string($callable) || $callable instanceof Closure)
+            ? new ReflectionFunction($callable)
+            : (new ReflectionClass($callable))->getMethod('__invoke');
 
-        $args = $this->resolve($reflectedFunction->getParameters(), $explicitArgs);
-
-        return call_user_func_array($callable, $args);
+        return $callable(...$this->resolve($reflectedFunction->getParameters(), $arguments));
     }
 
     /**
-     * Find an entry including within delegates.
+     * Find an item including within delegates.
      *
      * @param  string  $key
-     * @param  boolean $found
-     * @param  bool    $unset
+     *
      * @return mixed
      */
-    protected function find($key, & $found = false, $unset = false)
+    protected function find($key)
     {
-        if ($unset && ! in_array($key, $this->ignoreInDelegates)) {
-            $this->ignoreInDelegates[] = $key;
-        }
-
-        if (array_key_exists($key, $this->items)) {
-            $found = true;
-            if ($unset) {
-                unset($this->items[$key]);
-                return;
-            }
+        if (isset($this->items[$key])) {
             return $this->items[$key];
         }
 
-        if (in_array($key, $this->ignoreInDelegates)) {
-            $found = false;
-            return;
-        }
-
-        foreach ($this->delegates as $delegate) {
-            if ($delegate->has($key)) {
-                $found = true;
-                return $delegate->get($key);
+        if (! in_array($key, $this->ignoreInDelegates)) {
+            foreach ($this->delegates as $delegate) {
+                if ($delegate->has($key)) {
+                    return $delegate->get($key);
+                }
             }
         }
     }

@@ -16,30 +16,89 @@ use InvalidArgumentException;
 
 class ServiceContainer extends Container
 {
-    use Macroable {
-        __call as macroCall;
-    }
-
+    /**
+     * Has the container booted.
+     *
+     * @var bool
+     */
     protected $hasBooted = false;
 
+    /**
+     * Facades.
+     *
+     * @var mixed[]
+     */
     protected $facades = [];
+
+    /**
+     * Providers.
+     *
+     * @var mixed[]
+     */
     protected $providers = [];
+
+    /**
+     * Deferred macros.
+     *
+     * @var string[]
+     */
     protected $deferredMacros = [];
+
+    /**
+     * Deferred bindings.
+     *
+     * @var string[]
+     */
     protected $deferredBindings = [];
+
+    /**
+     * Registered providers.
+     *
+     * @var ServiceProviderInterface[]
+     */
     protected $registeredProviders = [];
 
-    public function __set($property, $value)
+    /**
+     * Create the container.
+     *
+     * @param array $providers
+     */
+    public function __construct($providers = [])
     {
-        return $this->addFacade($property, $value);
+        $this->addServiceProviders(
+            is_array($providers) ? $providers : $providers
+        );
     }
 
+    /**
+     * Add a facade.
+     *
+     * @param string $property
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    public function __set($property, $value)
+    {
+        $this->addFacade($property, $value);
+
+        return $value;
+    }
+
+    /**
+     * Get a facade.
+     *
+     * @param string $property
+     *
+     * @return mixed
+     */
     public function __get($property)
     {
         if (! isset($this->facades[$property])) {
             throw new Exception(
                 sprintf(
                     'Undefined property %s::%s. Facade %s is not defined.',
-                    get_class(),
+                    static::class,
                     $property,
                     $property
                 )
@@ -48,33 +107,76 @@ class ServiceContainer extends Container
 
         $facade = $this->facades[$property];
 
-        if (is_string($facade)) {
-            return $this->get($facade);
-        }
-
         if (is_callable($facade)) {
             return $this->call($facade);
         }
 
-        return $facade;
+        return $this->get($facade);
     }
 
-    public function __call($method, $parameters)
+    /**
+     * Call a macro.
+     *
+     * @param string $name
+     * @param mixed[] $arguments
+     * @return mixed
+     */
+    public function __call($name, array $arguments)
     {
-        if ((! static::hasMacro($method))
-            && isset($this->deferredMacros[$method])
-        ) {
-            $this->promoteDeferredServiceProvider($this->deferredMacros[$method]);
+        if (isset($this->deferredMacros[$name])) {
+            $this->promoteDeferredServiceProvider(
+                $this->deferredMacros[$name]
+            );
         }
 
-        return static::macroCall($method, $parameters);
+        return parent::__call($name, $arguments);
     }
 
-    public function __invoke()
+    /** @inheritDoc */
+    public function get($key, array $arguments = [])
     {
-        call_user_func_array([$this, 'bootstrap'], func_get_args());
+        try {
+            return parent::get($key, $arguments);
+        } catch (NotFoundException $e) {
+            if (! isset($this->deferredBindings[$key])) {
+                throw $e;
+            }
+
+            $provider = $this->promoteDeferredServiceProvider(
+                $this->deferredBindings[$key]
+            );
+
+            return parent::get($key, $arguments);
+        }
     }
 
+    /** @inheritDoc */
+    public function has($key)
+    {
+        if (parent::has($key)) {
+            return true;
+        }
+
+        return isset($this->deferredBindings[$key]);
+    }
+
+    /** @inheritDoc */
+    public function hasMacro($key)
+    {
+        if (parent::hasMacro($key)) {
+            return true;
+        }
+
+        return isset($this->deferredMacros[$key]);
+    }
+
+    /**
+     * Add a service provider.
+     *
+     * @param string|ServiceProviderInterface $provider
+     *
+     * @return ServiceContainer
+     */
     public function addServiceProvider($provider)
     {
         $this->providers[] = $provider;
@@ -86,50 +188,66 @@ class ServiceContainer extends Container
                 $this->bootServiceProvider($provider);
             }
         }
+
+        return $this;
     }
 
+    /**
+     * Add service providers.
+     *
+     * @param string[]|ServiceProviderInterface[] $providers
+     *
+     * @return ServiceContainer
+     */
     public function addServiceProviders(array $providers)
     {
         foreach ($providers as $provider) {
             $this->addServiceProvider($provider);
         }
+
+        return $this;
     }
 
+    /**
+     * Add a facade.
+     *
+     * @param string $key
+     * @param mixed $facade
+     *
+     * @return ServiceContainer
+     */
     public function addFacade($key, $facade)
     {
         $this->facades[$key] = $facade;
+
+        return $this;
     }
 
+    /**
+     * Add facades.
+     *
+     * @param mixed[] $facades
+     *
+     * @return ServiceContainer
+     */
     public function addFacades(array $facades)
     {
         foreach ($facades as $key => $facade) {
             $this->addFacade($key, $facade);
         }
+
+        return $this;
     }
 
-    public function get($key, array $explicitArgs = [])
-    {
-        try {
-            if (! $this->has($key)) {
-                throw new NotFoundException;
-            }
-
-            return parent::get($key, $explicitArgs);
-        } catch (NotFoundException $e) {
-            if (isset($this->deferredBindings[$key])) {
-                $provider = $this->promoteDeferredServiceProvider(
-                    $this->deferredBindings[$key]
-                );
-            }
-
-            return parent::get($key, $explicitArgs);
-        }
-    }
-
+    /**
+     * Bootstrap the service providers.
+     *
+     * @return ServiceContainer
+     */
     public function bootstrap()
     {
         if ($this->hasBooted) {
-            return;
+            return $this;
         }
 
         foreach ($this->providers as $provider) {
@@ -141,18 +259,31 @@ class ServiceContainer extends Container
         }
 
         $this->hasBooted = true;
+
+        return $this;
     }
 
+    /**
+     * Register the service provider.
+     *
+     * @param string|ServiceProviderInterface $class
+     * @param bool $force
+     * @param null|bool $isDeferred
+     *
+     * @return ServiceProviderInterface
+     */
     protected function registerServiceProvider($class, $force = false, & $isDeferred = null)
     {
         $isDeferred = $isDeferred ?: false;
 
         $provider = $class;
+        $isConstructedClass = false;
 
         if (! is_string($class)) {
+            $isConstructedClass = true;
             $class = get_class($class);
         } elseif (class_exists($class)) {
-            $provider = $this->get($class);
+            $provider = new $class;//$this->get($class);
         }
 
         if (! ($provider instanceof ServiceProviderInterface)) {
@@ -164,54 +295,104 @@ class ServiceContainer extends Container
             );
         }
 
-        if ($force || (! $this->isServiceProviderDeferred($provider))) {
-            $provider->setContainer($this);
-            $provider->register();
+        if (! $force && $this->isServiceProviderDeferrable($provider)) {
+            $isDeferred = true;
 
-            return $this->registeredProviders[$class] = $provider;
+            return $this->deferServiceProvider($provider, $isConstructedClass);
         }
 
-        $isDeferred = true;
+        $provider->register($this);
 
-        return $this->deferServiceProvider($provider);
+        return $this->registeredProviders[$class] = $provider;
     }
 
+    /**
+     * Boot the service provider.
+     *
+     * @param ServiceProviderInterface $provider
+     *
+     * @return ServiceProviderInterface
+     */
     protected function bootServiceProvider(ServiceProviderInterface $provider)
     {
-        return $provider->boot();
+        if ($this->isServiceProviderBootable($provider)) {
+            $provider->boot($this);
+        }
+
+        return $provider;
     }
 
-    protected function deferServiceProvider(ServiceProviderInterface $provider)
+    /**
+     * Defer the service provider.
+     *
+     * @param ServiceProviderInterface $provider
+     * @param bool $useInstance
+     *
+     * @return ServiceProviderInterface
+     */
+    protected function deferServiceProvider(ServiceProviderInterface $provider, $useInstance = false)
     {
-        $class = get_class($provider);
+        if (! $this->isServiceProviderDeferrable($provider)) {
+            return $provider;
+        }
+
+        $classOrProvider = $useInstance ? $provider : get_class($provider);
 
         foreach ($provider->getBindings() as $key => $binding) {
-            $this->deferredBindings[$binding] = $class;
+            $this->deferredBindings[$binding] = $classOrProvider;
+
             if (is_string($key)) {
                 $this->addFacade($key, $binding);
             }
         }
 
         foreach ($provider->getMacros() as $macro) {
-            $this->deferredMacros[$macro] = $class;
+            $this->deferredMacros[$macro] = $classOrProvider;
         }
 
         return $provider;
     }
 
-    protected function isServiceProviderDeferred(ServiceProviderInterface $provider)
+    /**
+     * Promote the deferred service provider.
+     *
+     * @param string|ServiceProviderInterface $classOrProvider
+     *
+     * @return ServiceProviderInterface
+     */
+    protected function promoteDeferredServiceProvider($classOrProvider)
     {
-        return (bool) $provider->getBindings() || (bool) $provider->getMacros();
-    }
-
-    protected function promoteDeferredServiceProvider($class)
-    {
-        $provider = $this->registerServiceProvider($class, true);
+        $provider = $this->registerServiceProvider($classOrProvider, true);
 
         if ($this->hasBooted) {
             $this->bootServiceProvider($provider);
         }
 
         return $provider;
+    }
+
+    /**
+     * Tell whether the service provider is bootable.
+     *
+     * @param ServiceProviderInterface $provider
+     *
+     * @return bool
+     */
+    protected function isServiceProviderBootable(ServiceProviderInterface $provider)
+    {
+        return $provider instanceof BootableServiceProviderInterface;
+    }
+
+    /**
+     * Tells whether the service provider is deferrable.
+     *
+     * @param ServiceProviderInterface $provider
+     *
+     * @return bool
+     */
+    protected function isServiceProviderDeferrable(ServiceProviderInterface $provider)
+    {
+        return $provider instanceof DeferrableServiceProviderInterface
+            && ($provider->getBindings() || $provider->getMacros());
     }
 }

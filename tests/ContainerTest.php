@@ -2,7 +2,9 @@
 
 namespace Bhittani\Container;
 
+use ArrayAccess;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 
 class ContainerTest extends TestCase
 {
@@ -16,126 +18,141 @@ class ContainerTest extends TestCase
     /** @test */
     function it_implements_psr11()
     {
-        $this->assertInstanceOf('Psr\Container\ContainerInterface', $this->container);
+        $this->assertInstanceOf(ContainerInterface::class, $this->container);
     }
 
     /** @test */
     function it_implements_ArrayAccess()
     {
-        $this->assertInstanceOf('ArrayAccess', $this->container);
+        $this->assertInstanceOf(ArrayAccess::class, $this->container);
     }
 
     /** @test */
     function it_adds_and_retrieves_an_entity()
     {
         $this->container->add('foo', 'bar');
+
         $this->assertEquals('bar', $this->container->get('foo'));
     }
 
     /** @test */
-    function it_resolves_an_unbinded_object_if_class_constructor_is_not_defined_or_has_no_params()
+    function it_resolves_an_unbinded_object_if_no_class_constructor()
     {
-        $class = 'Bhittani\Container\Fixtures\WithoutConstructor';
-        $this->assertInstanceOf($class, $this->container->get($class));
+        $class = Fixtures\WithoutConstructor::class;
 
-        $class = 'Bhittani\Container\Fixtures\WithZeroParams';
         $this->assertInstanceOf($class, $this->container->get($class));
     }
 
     /** @test */
-    function it_resolves_an_object_if_class_constructor_params_can_be_resolved_recursively()
+    function it_resolves_an_unbinded_object_if_class_constructor_has_no_params()
     {
-        $class = 'Bhittani\Container\Fixtures\WithTwoParams';
+        $class = Fixtures\WithZeroParams::class;
+
+        $this->assertInstanceOf($class, $this->container->get($class));
+    }
+
+    /** @test */
+    function it_resolves_an_unbinded_object_if_class_constructor_params_can_be_resolved_recursively()
+    {
+        $class = Fixtures\WithTwoParams::class;
+
         $this->assertInstanceOf($class, $this->container->get($class));
     }
 
     /** @test */
     function it_resolves_an_object_if_class_constructor_params_are_being_managed()
     {
-        $foobarClass = 'Bhittani\Container\Fixtures\Foobar';
+        $class = Fixtures\Foobar::class;
 
         $this->container->add('foo', 'bar');
-        $this->assertInstanceOf($foobarClass, $this->container->get($foobarClass));
 
-        $class = 'Bhittani\Container\Fixtures\WithManagedParams';
+        $this->assertInstanceOf($class, $this->container->get($class));
+
+        $class = Fixtures\WithManagedParams::class;
+
         $this->assertInstanceOf($class, $this->container->get($class));
     }
 
     /** @test */
     function it_resolves_a_class_if_constructor_has_optional_params()
     {
-        $class = 'Bhittani\Container\Fixtures\WithOptionalParams';
-        $this->assertInstanceOf($class, $this->container->get($class));
+        $class = Fixtures\WithOptionalParams::class;
+
+        $withOptionalParams = $this->container->get($class);
+
+        $this->assertInstanceOf($class, $withOptionalParams);
+        $this->assertEquals('b', $withOptionalParams->a);
 
         $this->container->add('a', 'c');
-        $WithOptionalParams = $this->container->get($class);
-        $this->assertInstanceOf($class, $WithOptionalParams);
-        $this->assertEquals('c', $WithOptionalParams->a);
+        $withOptionalParams = $this->container->get($class);
+
+        $this->assertInstanceOf($class, $withOptionalParams);
+        $this->assertEquals('c', $withOptionalParams->a);
     }
 
     /** @test */
     function it_resolves_a_closure()
     {
-        $this->container->add('a', function () {
+        $this->container->add('closure', function () {
             return 'b';
         });
-        $this->assertEquals('b', $this->container->get('a'));
 
-        $foobarClass = 'Bhittani\Container\Fixtures\Foobar';
-        $this->container->add($foobarClass, function () use ($foobarClass) {
-            return new $foobarClass('baz');
+        $this->assertEquals('b', $this->container->get('closure'));
+
+        $class = Fixtures\Foobar::class;
+
+        $this->container->add($class, function () use ($class) {
+            return new $class('baz');
         });
-        $this->assertInstanceOf($foobarClass, $this->container->get($foobarClass));
+
+        $this->assertInstanceOf($class, $this->container->get($class));
     }
 
     /** @test */
     function it_resolves_a_closure_with_params()
     {
-        $this->container->add('closure', function (\Bhittani\Container\Fixtures\WithTwoParams $w2) {
-            return 'it works!';
+        $this->container->add('closure', function (Fixtures\WithTwoParams $w2) {
+            return 'foobar';
         });
-        $this->assertEquals('it works!', $this->container->get('closure'));
+
+        $this->assertEquals('foobar', $this->container->get('closure'));
     }
 
     /** @test */
     function it_resolves_a_direct_closure()
     {
-        $result = $this->container->call(function (\Bhittani\Container\Fixtures\WithTwoParams $w2) {
-            return 'it works!';
+        $result = $this->container->call(function (Fixtures\WithTwoParams $w2) {
+            return 'foobar';
         });
-        $this->assertEquals('it works!', $result);
+
+        $this->assertEquals('foobar', $result);
     }
 
     /** @test */
-    function it_resolves_an_invocable()
+    function it_does_not_resolve_an_invocable()
     {
-        $this->container->add('invocable', new \Bhittani\Container\Fixtures\Invocable);
-        $this->assertEquals('invoke', $this->container->get('invocable'));
-    }
+        $this->container->add('invocable', $invocable = new Fixtures\Invocable);
 
-    /** @test */
-    function it_resolves_an_invocable_with_params()
-    {
-        $this->container->add('invocableWithParams', new \Bhittani\Container\Fixtures\InvocableWithParams);
-        $this->assertEquals('invoke + params', $this->container->get('invocableWithParams'));
+        $this->assertSame($invocable, $this->container->get('invocable'));
     }
 
     /** @test */
     function it_resolves_a_direct_invocable()
     {
-        $result = $this->container->call(new \Bhittani\Container\Fixtures\InvocableWithParams);
+        $result = $this->container->call(new Fixtures\InvocableWithParams);
+
         $this->assertEquals('invoke + params', $result);
     }
 
     /** @test */
     function it_resolves_an_interface()
     {
-        $contractInterface = 'Bhittani\Container\Fixtures\Contract';
-        $concreteClass = 'Bhittani\Container\Fixtures\Concrete';
+        $contractInterface = Fixtures\Contract::class;
+        $concreteClass = Fixtures\Concrete::class;
         $concrete = $this->container->get($concreteClass);
         $this->assertInstanceOf($contractInterface, $concrete);
         $this->container->add($contractInterface, $concrete);
-        $contractParamClass = 'Bhittani\Container\Fixtures\ContractParam';
+        $contractParamClass = Fixtures\ContractParam::class;
         $contractParam = $this->container->get($contractParamClass);
         $this->assertInstanceOf($contractParamClass, $contractParam);
     }
@@ -143,55 +160,58 @@ class ContainerTest extends TestCase
     /** @test */
     function it_accepts_explicit_arguments_to_resolve_an_entity()
     {
-        $class = 'Bhittani\Container\Fixtures\Foobar';
+        $class = Fixtures\Foobar::class;
+
         $this->assertInstanceOf($class, $this->container->get($class, ['foo' => 'bar']));
 
-        $class = 'Bhittani\Container\Fixtures\MixedParams';
+        $class = Fixtures\MixedParams::class;
+
         $this->assertInstanceOf($class, $this->container->get($class, ['foo' => 'bar']));
 
-        $closure = function (\Bhittani\Container\Fixtures\WithTwoParams $w2, $bar = null, $foo) {
+        $closure = function (Fixtures\WithTwoParams $w2, $bar = null, $foo) {
             return $foo;
         };
 
         $this->container->add('baz', $closure);
-        $this->assertEquals('bar', $this->container->get('baz', ['foo' => 'bar']));
 
+        $this->assertEquals('bar', $this->container->get('baz', ['foo' => 'bar']));
         $this->assertEquals('bar', $this->container->call($closure, ['foo' => 'bar']));
     }
 
     /** @test */
     function it_allows_singletons()
     {
-        $w0Class = 'Bhittani\Container\Fixtures\WithZeroParams';
+        $class = Fixtures\WithZeroParams::class;
 
-        $this->container->share('shared', function () use ($w0Class) {
-            return new $w0Class;
+        $this->container->share('shared', function () use ($class) {
+            return new $class;
         });
         $resolvedShared1 = $this->container->get('shared');
-        $this->assertInstanceOf($w0Class, $resolvedShared1);
+        $this->assertInstanceOf($class, $resolvedShared1);
         $resolvedShared2 = $this->container->get('shared');
-        $this->assertInstanceOf($w0Class, $resolvedShared2);
+        $this->assertInstanceOf($class, $resolvedShared2);
         $this->assertSame($resolvedShared1, $resolvedShared2);
 
-        $this->container->add('shared', function () use ($w0Class) {
-            return new $w0Class;
+        $this->container->add('shared', function () use ($class) {
+            return new $class;
         });
+
         $resolvedShared1 = $this->container->get('shared');
-        $this->assertInstanceOf($w0Class, $resolvedShared1);
+        $this->assertInstanceOf($class, $resolvedShared1);
         $resolvedShared2 = $this->container->get('shared');
-        $this->assertInstanceOf($w0Class, $resolvedShared2);
+        $this->assertInstanceOf($class, $resolvedShared2);
         $this->assertNotSame($resolvedShared1, $resolvedShared2);
     }
 
     /** @test */
     function it_allows_singleton_interfaces()
     {
-        $contractInterface = 'Bhittani\Container\Fixtures\Contract';
-        $concreteClass = 'Bhittani\Container\Fixtures\Concrete';
+        $contractInterface = Fixtures\Contract::class;
+        $concreteClass = Fixtures\Concrete::class;
         $this->container->share($contractInterface, function () use ($concreteClass) {
             return $this->container->get($concreteClass);
         });
-        $contractParamClass = 'Bhittani\Container\Fixtures\ContractParam';
+        $contractParamClass = Fixtures\ContractParam::class;
         $contractParam1 = $this->container->get($contractParamClass);
         $this->assertInstanceOf($contractParamClass, $contractParam1);
         $contractParam2 = $this->container->get($contractParamClass);
@@ -201,12 +221,25 @@ class ContainerTest extends TestCase
         $this->container->add($contractInterface, function () use ($concreteClass) {
             return $this->container->get($concreteClass);
         });
-        $contractParamClass = 'Bhittani\Container\Fixtures\ContractParam';
+        $contractParamClass = Fixtures\ContractParam::class;
         $contractParam1 = $this->container->get($contractParamClass);
         $this->assertInstanceOf($contractParamClass, $contractParam1);
         $contractParam2 = $this->container->get($contractParamClass);
         $this->assertInstanceOf($contractParamClass, $contractParam2);
         $this->assertNotSame($contractParam1->concrete, $contractParam2->concrete);
+    }
+
+    /** @test */
+    function it_supports_aliases()
+    {
+        $this->container->alias('fizz', 'foo');
+
+        $this->assertFalse($this->container->has('fizz'));
+
+        $this->container->add('foo', 'bar');
+
+        $this->assertTrue($this->container->has('fizz'));
+        $this->assertEquals('bar', $this->container->get('fizz'));
     }
 
     /** @test */
@@ -247,13 +280,6 @@ class ContainerTest extends TestCase
         $this->assertEquals('foo', $this->container[0]);
         $this->assertTrue(isset($this->container['world']));
         $this->assertFalse(isset($this->container['beep']));
-        // Should we also unset deeply in delegations?
-        // Not unsetting from all delegations allows some fancy logic.
-        // For e.g. Stack pop
-        // while (isset($this->container['foo'])) {
-        //     // some operation on $this->container['foo']
-        //     unset($this->container['foo']);
-        // }
         unset($this->container['world']);
         $this->assertFalse(isset($this->container['world']));
     }
@@ -270,21 +296,36 @@ class ContainerTest extends TestCase
             );
         }
 
-        $this->fail('A NotFoundException exception was not thrown.');
+        $this->fail(sprintf('A %s exception was not thrown.', NotFoundException::class));
     }
 
     /** @test */
-    function it_throws_a_BindingResolutionException_if_key_can_not_be_resolved()
+    function it_throws_a_NotFoundException_if_an_unbinded_class_can_not_be_resolved()
     {
         try {
-            $this->container->get('Bhittani\Container\Fixtures\Foobar');
-        } catch (BindingResolutionException $e) {
+            $this->container->get($class = Fixtures\Foobar::class);
+        } catch (NotFoundException $e) {
             return $this->assertEquals(
-                'Failed to resolve class Bhittani\Container\Fixtures\Foobar from the container.',
+                sprintf('Failed to resolve class %s.', $class),
                 $e->getMessage()
             );
         }
 
-        $this->fail('A BindingResolutionException exception was not thrown.');
+        $this->fail(sprintf('A %s exception was not thrown.', NotFoundException::class));
+    }
+
+    /** @test */
+    function it_throws_a_NotFoundException_if_an_unbinded_interface_can_not_be_resolved()
+    {
+        try {
+            $this->container->get($interface = Fixtures\Contract::class);
+        } catch (NotFoundException $e) {
+            return $this->assertEquals(
+                sprintf('Failed to resolve interface %s.', $interface),
+                $e->getMessage()
+            );
+        }
+
+        $this->fail(sprintf('A %s exception was not thrown.', NotFoundException::class));
     }
 }
