@@ -132,7 +132,7 @@ class ServiceContainer extends Container
         return parent::__call($name, $arguments);
     }
 
-    /** @inheritDoc */
+    /** {@inheritdoc} */
     public function get($key, array $arguments = [])
     {
         try {
@@ -150,7 +150,7 @@ class ServiceContainer extends Container
         }
     }
 
-    /** @inheritDoc */
+    /** {@inheritdoc} */
     public function has($key)
     {
         if (parent::has($key)) {
@@ -160,7 +160,7 @@ class ServiceContainer extends Container
         return isset($this->deferredBindings[$key]);
     }
 
-    /** @inheritDoc */
+    /** {@inheritdoc} */
     public function hasMacro($key)
     {
         if (parent::hasMacro($key)) {
@@ -272,7 +272,7 @@ class ServiceContainer extends Container
      *
      * @return ServiceProviderInterface
      */
-    protected function registerServiceProvider($class, $force = false, & $isDeferred = null)
+    protected function registerServiceProvider($class, $force = false, &$isDeferred = null)
     {
         $isDeferred = $isDeferred ?: false;
 
@@ -283,7 +283,7 @@ class ServiceContainer extends Container
             $isConstructedClass = true;
             $class = get_class($class);
         } elseif (class_exists($class)) {
-            $provider = new $class;//$this->get($class);
+            $provider = new $class; //$this->get($class);
         }
 
         if (! ($provider instanceof ServiceProviderInterface)) {
