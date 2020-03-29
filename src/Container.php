@@ -11,13 +11,13 @@
 
 namespace Bhittani\Container;
 
+use ArrayAccess;
 use Closure;
 use Exception;
-use ArrayAccess;
+use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use ReflectionFunction;
 use ReflectionParameter;
-use Psr\Container\ContainerInterface;
 
 class Container implements ContainerInterface, ArrayAccess
 {
