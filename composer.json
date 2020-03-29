@@ -1,7 +1,17 @@
 {
     "name": "bhittani/container",
     "description": "PSR-11 dependency injection container implementation with automatic resolution, service providers, facades and macros.",
-    "keywords": ["dependency", "injection", "container", "di", "ioc", "psr-11", "service-provider", "facades", "macros"],
+    "keywords": [
+        "dependency",
+        "injection",
+        "container",
+        "di",
+        "ioc",
+        "psr-11",
+        "service-provider",
+        "facades",
+        "macros"
+    ],
     "homepage": "https://github.com/kamalkhan/container",
     "license": "MIT",
     "authors": [
@@ -27,7 +37,7 @@
             "tests/fixtures.php"
         ]
     },
-	"extra": {
+    "extra": {
         "branch-alias": {
             "dev-master": "1.0-dev"
         }
@@ -35,7 +45,9 @@
     "config": {
         "sort-packages": true,
         "preferred-install": "dist",
-        "platform": { "php": "5.6" }
+        "platform": {
+            "php": "5.6"
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
@@ -53,7 +65,12 @@
         "test": "phpunit --colors=always"
     },
     "repositories": [
-        { "packagist": false },
-        { "type": "composer", "url": "https://packagist.org" }
+        {
+            "packagist": false
+        },
+        {
+            "type": "composer",
+            "url": "https://packagist.org"
+        }
     ]
 }
