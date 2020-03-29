@@ -11,10 +11,10 @@
 
 namespace Bhittani\Container;
 
+use BadMethodCallException;
 use Closure;
 use ReflectionClass;
 use ReflectionMethod;
-use BadMethodCallException;
 
 trait Macroable
 {
