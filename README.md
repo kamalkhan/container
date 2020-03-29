@@ -6,29 +6,30 @@
 
 PSR-11 dependency injection container implementation with automatic resolution, service providers, facades and macros. This package does not require any external dependencies.
 
-- [Install](#install)
-- [Usage](#usage)
-  - [PSR-11 Implementation](#psr-11-implementation)
-  - [Container](#container)
-  - [Binding resolution](#binding-resolution)
-  - [Automatic dependency resolution](#automatic-dependency-resolution)
-  - [Interface resolution](#interface-resolution)
-  - [Callable resolution](#callable-resolution)
-  - [Custom parameter resolution](#custom-parameter-resolution)
-  - [Factory bindings](#factory-bindings)
-  - [Shared bindings](#shared-bindings)
-  - [Delegates](#delegates)
-  - [Service providers](#service-providers)
-  - [Facades](#facades)
-  - [Macros](#macros)
-  - [Deferred Service Providers](#deferred-service-providers)
-- [Changelog](#changelog)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [Security](#security)
-- [Inspiration](#inspiration)
-- [Credits](#credits)
-- [License](#license)
+- [PSR-11 Container](#psr-11-container)
+  - [Install](#install)
+  - [Usage](#usage)
+    - [PSR-11 Implementation](#psr-11-implementation)
+    - [Container](#container)
+    - [Binding resolution](#binding-resolution)
+    - [Automatic dependency resolution](#automatic-dependency-resolution)
+    - [Interface resolution](#interface-resolution)
+    - [Callable resolution](#callable-resolution)
+    - [Custom parameter resolution](#custom-parameter-resolution)
+    - [Factory bindings](#factory-bindings)
+    - [Shared bindings](#shared-bindings)
+    - [Delegates](#delegates)
+    - [Service providers](#service-providers)
+    - [Facades](#facades)
+    - [Macros](#macros)
+    - [Deferred Service Providers](#deferred-service-providers)
+  - [Changelog](#changelog)
+  - [Testing](#testing)
+  - [Contributing](#contributing)
+  - [Security](#security)
+  - [Inspiration](#inspiration)
+  - [Credits](#credits)
+  - [License](#license)
 
 ## Install
 
@@ -354,14 +355,14 @@ use Bhittani\Container\AbstractServiceProvider;
 
 class DatabaseServiceProvider extends AbstractServiceProvider
 {
-    public function boot()
+    public function boot($container)
     {
         // This method will be called when all service providers are registered.
     }
     
-    public function register()
+    public function register($container)
     {
-        $this->container->share(DatabaseInterface::class, function () {
+        $container->share(DatabaseInterface::class, function () {
             return new SqliteDatabase;
         });
     }
@@ -410,7 +411,7 @@ $container->share(DatabaseInterface::class, function () {
 });
 
 $container->macro('query', function ($sql) {
-    // The underlying ServiceContainer will be assigned to $this.
+    // $this will be set to the underlying ServiceContainer.
     return $this->get(DatabaseInterface::class)->query($sql);
 });
 
@@ -439,9 +440,9 @@ class DatabaseServiceProvider extends AbstractServiceProvider
         'query',
     ];
 
-    public function register()
+    public function register($container)
     {
-        $this->container->share(DatabaseInterface::class, function () {
+        $container->share(DatabaseInterface::class, function () {
             return new SqliteDatabase;
         });
 
