@@ -21,8 +21,7 @@ jobs:
       run: |
         php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
         php composer-setup.php
-        mv composer.phar composer
     - name: Install Dependencies
-      run: composer install -q --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --ignore-platform-reqs --prefer-dist
+      run: php composer.phar install -q --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --ignore-platform-reqs --prefer-dist
     - name: Run tests
       run: vendor/bin/phpunit
