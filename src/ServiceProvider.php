@@ -11,8 +11,6 @@
 
 namespace Bhittani\Container;
 
-use Psr\Container\ContainerInterface;
-
 abstract class ServiceProvider implements
     ServiceProviderInterface,
         BootableServiceProviderInterface,
@@ -33,13 +31,13 @@ abstract class ServiceProvider implements
     protected $provides = [];
 
     /** {@inheritdoc} */
-    public function boot(ContainerInterface $container)
+    public function boot($container)
     {
         // Extended classes may implement this method.
     }
 
     /** {@inheritdoc} */
-    public function register(ContainerInterface $container)
+    public function register($container)
     {
         // Extended classes may implement this method.
     }

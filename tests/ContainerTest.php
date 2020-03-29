@@ -109,16 +109,6 @@ class ContainerTest extends TestCase
     }
 
     /** @test */
-    function it_resolves_a_closure_with_params()
-    {
-        $this->container->add('closure', function (Fixtures\WithTwoParams $w2) {
-            return 'foobar';
-        });
-
-        $this->assertEquals('foobar', $this->container->get('closure'));
-    }
-
-    /** @test */
     function it_resolves_a_direct_closure()
     {
         $result = $this->container->call(function (Fixtures\WithTwoParams $w2) {
@@ -172,9 +162,6 @@ class ContainerTest extends TestCase
             return $foo;
         };
 
-        $this->container->add('baz', $closure);
-
-        $this->assertEquals('bar', $this->container->get('baz', ['foo' => 'bar']));
         $this->assertEquals('bar', $this->container->call($closure, ['foo' => 'bar']));
     }
 

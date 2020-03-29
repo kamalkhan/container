@@ -11,14 +11,12 @@
 
 namespace Bhittani\Container;
 
-use Psr\Container\ContainerInterface;
-
 interface ServiceProviderInterface
 {
     /**
      * Register any bindings, facades, macros and/or mixins with the container.
      *
-     * @param ContainerInterface $container
+     * @param \Psr\Container\ContainerInterface $container
      */
-    public function register(ContainerInterface $container);
+    public function register($container);
 }

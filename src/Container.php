@@ -83,10 +83,13 @@ class Container implements ContainerInterface, ArrayAccess
             }
 
             try {
-                $entity = $this->resolveCallable($entity, $arguments);
+                $entity = $entity($this, ...$arguments);
+                // $entity = $this->resolveCallable($entity, $arguments);
             } catch (Exception $e) {
                 throw new BindingResolutionException(
-                    "Failed to resolve {$key} from the container.", 0, $e
+                    "Failed to resolve {$key} from the container.",
+                    $e->getCode(),
+                    $e
                 );
             }
 
@@ -101,7 +104,7 @@ class Container implements ContainerInterface, ArrayAccess
             try {
                 return $this->resolveClass($key, $arguments);
             } catch (Exception $e) {
-                throw new NotFoundException("Failed to resolve class {$key}.", 0, $e);
+                throw new NotFoundException("Failed to resolve class {$key}.", $e->getCode(), $e);
             }
         }
 
@@ -175,19 +178,6 @@ class Container implements ContainerInterface, ArrayAccess
         $this->shared[] = $key;
 
         return $this;
-    }
-
-    /**
-     * Add a singleton.
-     *
-     * @param  string $key
-     * @param  mixed  $value
-     *
-     * @return Container
-     */
-    public function singleton($key, $value)
-    {
-        return $this->share($key, $value);
     }
 
     /**

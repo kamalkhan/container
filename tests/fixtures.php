@@ -70,10 +70,10 @@ class FooService {}
 
 class TestServiceProvider extends ServiceProvider {
     static $calls = [];
-    function boot(ContainerInterface $container) {
+    function boot($container) {
         static::$calls[] = 'boot:'.static::class;
     }
-    function register(ContainerInterface $container) {
+    function register($container) {
         static::$calls[] = 'register:'.static::class;
     }
 }
@@ -86,10 +86,10 @@ class DeferredBindingServiceProvider extends ServiceProvider {
     static $booted = 0;
     static $registered = 0;
     var $provides = ['foo'];
-    function boot(ContainerInterface $container) {
+    function boot($container) {
         static::$booted++;
     }
-    function register(ContainerInterface $container) {
+    function register($container) {
         static::$registered++;
         $container->add('foo', 'bar');
     }
@@ -99,10 +99,10 @@ class DeferredFacadeServiceProvider extends ServiceProvider {
     static $booted = 0;
     static $registered = 0;
     var $provides = ['foo' => 'foo'];
-    public function boot(ContainerInterface $container) {
+    public function boot($container) {
         static::$booted++;
     }
-    public function register(ContainerInterface $container) {
+    public function register($container) {
         static::$registered++;
         $container->add('foo', 'bar');
     }
@@ -112,10 +112,10 @@ class DeferredMacroServiceProvider extends ServiceProvider {
     static $booted = 0;
     static $registered = 0;
     var $macros = ['foo'];
-    public function boot(ContainerInterface $container) {
+    public function boot($container) {
         static::$booted++;
     }
-    public function register(ContainerInterface $container) {
+    public function register($container) {
         static::$registered++;
         $container->macro('foo', function ($foo) {
             return $foo;

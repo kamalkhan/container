@@ -66,7 +66,7 @@ class ServiceContainer extends Container
     public function __construct($providers = [])
     {
         $this->addServiceProviders(
-            is_array($providers) ? $providers : $providers
+            is_array($providers) ? $providers : [$providers]
         );
     }
 
@@ -132,6 +132,62 @@ class ServiceContainer extends Container
         return parent::__call($name, $arguments);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @param  string $key
+     * @param  mixed  $value
+     * @param  bool   $facade
+     *
+     * @return ServiceContainer
+     */
+    public function add($key, $value, $facade = false)
+    {
+        if ($facade) {
+            $this->addFacade($key, $key);
+        }
+
+        return parent::add($key, $value);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param  string $key
+     * @param  mixed  $value
+     * @param  bool   $facade
+     *
+     * @return ServiceContainer
+     */
+    public function share($key, $value, $facade = false)
+    {
+        if ($facade) {
+            $this->addFacade($key, $key);
+        }
+
+        return parent::share($key, $value);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param string|array $aliases
+     * @param string $actual
+     * @param bool $facade
+     *
+     * @return ServiceContainer
+     */
+    public function alias($aliases, $actual, $facade = false)
+    {
+        if ($facade) {
+            foreach ((array) $aliases as $alias) {
+                $this->addFacade($alias, $actual);
+            }
+        }
+
+        return parent::alias($aliases, $actual);
+    }
+
     /** {@inheritdoc} */
     public function get($key, array $arguments = [])
     {
@@ -175,9 +231,11 @@ class ServiceContainer extends Container
      *
      * @param string|ServiceProviderInterface $provider
      *
+     * @param mixed ...$arguments
+     *
      * @return ServiceContainer
      */
-    public function addServiceProvider($provider)
+    public function addServiceProvider($provider, ...$arguments)
     {
         $this->providers[] = $provider;
 
@@ -185,7 +243,7 @@ class ServiceContainer extends Container
             $provider = $this->registerServiceProvider($provider, false, $isDeferred);
 
             if (! $isDeferred) {
-                $this->bootServiceProvider($provider);
+                $this->bootServiceProvider($provider, ...$arguments);
             }
         }
 
@@ -218,6 +276,7 @@ class ServiceContainer extends Container
      */
     public function addFacade($key, $facade)
     {
+        // TODO: Validate $key to be a valid variable name.
         $this->facades[$key] = $facade;
 
         return $this;
@@ -242,9 +301,10 @@ class ServiceContainer extends Container
     /**
      * Bootstrap the service providers.
      *
+     * @param mixed ...$arguments
      * @return ServiceContainer
      */
-    public function bootstrap()
+    public function bootstrap(...$arguments)
     {
         if ($this->hasBooted) {
             return $this;
@@ -254,11 +314,11 @@ class ServiceContainer extends Container
             $this->registerServiceProvider($provider);
         }
 
-        foreach ($this->registeredProviders as $provider) {
-            $this->bootServiceProvider($provider);
-        }
-
         $this->hasBooted = true;
+
+        foreach ($this->registeredProviders as $provider) {
+            $this->bootServiceProvider($provider, ...$arguments);
+        }
 
         return $this;
     }
@@ -313,10 +373,10 @@ class ServiceContainer extends Container
      *
      * @return ServiceProviderInterface
      */
-    protected function bootServiceProvider(ServiceProviderInterface $provider)
+    protected function bootServiceProvider(ServiceProviderInterface $provider, ...$arguments)
     {
         if ($this->isServiceProviderBootable($provider)) {
-            $provider->boot($this);
+            $provider->boot($this, ...$arguments);
         }
 
         return $provider;
