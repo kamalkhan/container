@@ -133,7 +133,7 @@ class ServiceContainer extends Container
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      *
      * @param  string $key
      * @param  mixed  $value
@@ -151,7 +151,7 @@ class ServiceContainer extends Container
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      *
      * @param  string $key
      * @param  mixed  $value
@@ -169,7 +169,7 @@ class ServiceContainer extends Container
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      *
      * @param string|array $aliases
      * @param string $actual
