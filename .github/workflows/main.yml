@@ -17,6 +17,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v1
+    - name: Install Git
+      run: apt-get install git -y
     - name: Install Composer
       run: |
         php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
