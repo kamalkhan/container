@@ -137,14 +137,14 @@ class ServiceContainer extends Container
      *
      * @param  string $key
      * @param  mixed  $value
-     * @param  bool   $facade
+     * @param  bool|string   $facade
      *
      * @return ServiceContainer
      */
     public function add($key, $value, $facade = false)
     {
         if ($facade) {
-            $this->addFacade($key, $key);
+            $this->addFacade(is_bool($facade) ? $key : $facade, $key);
         }
 
         return parent::add($key, $value);
@@ -155,14 +155,14 @@ class ServiceContainer extends Container
      *
      * @param  string $key
      * @param  mixed  $value
-     * @param  bool   $facade
+     * @param  bool|string   $facade
      *
      * @return ServiceContainer
      */
     public function share($key, $value, $facade = false)
     {
         if ($facade) {
-            $this->addFacade($key, $key);
+            $this->addFacade(is_bool($facade) ? $key : $facade, $key);
         }
 
         return parent::share($key, $value);
