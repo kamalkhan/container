@@ -6,30 +6,29 @@
 
 PSR-11 dependency injection container implementation with automatic resolution, service providers, facades and macros. This package does not require any external dependencies.
 
-- [PSR-11 Container](#psr-11-container)
-  - [Install](#install)
-  - [Usage](#usage)
-    - [PSR-11 Implementation](#psr-11-implementation)
-    - [Container](#container)
-    - [Binding resolution](#binding-resolution)
-    - [Automatic dependency resolution](#automatic-dependency-resolution)
-    - [Interface resolution](#interface-resolution)
-    - [Callable resolution](#callable-resolution)
-    - [Custom parameter resolution](#custom-parameter-resolution)
-    - [Factory bindings](#factory-bindings)
-    - [Shared bindings](#shared-bindings)
-    - [Delegates](#delegates)
-    - [Service providers](#service-providers)
-    - [Facades](#facades)
-    - [Macros](#macros)
-    - [Deferred Service Providers](#deferred-service-providers)
-  - [Changelog](#changelog)
-  - [Testing](#testing)
-  - [Contributing](#contributing)
-  - [Security](#security)
-  - [Inspiration](#inspiration)
-  - [Credits](#credits)
-  - [License](#license)
+- [Install](#install)
+- [Usage](#usage)
+  - [PSR-11 Implementation](#psr-11-implementation)
+  - [Container](#container)
+  - [Binding resolution](#binding-resolution)
+  - [Automatic dependency resolution](#automatic-dependency-resolution)
+  - [Interface resolution](#interface-resolution)
+  - [Callable resolution](#callable-resolution)
+  - [Custom parameter resolution](#custom-parameter-resolution)
+  - [Factory bindings](#factory-bindings)
+  - [Shared bindings](#shared-bindings)
+  - [Delegates](#delegates)
+  - [Service providers](#service-providers)
+  - [Facades](#facades)
+  - [Macros](#macros)
+  - [Deferred Service Providers](#deferred-service-providers)
+- [Changelog](#changelog)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [Security](#security)
+- [Inspiration](#inspiration)
+- [Credits](#credits)
+- [License](#license)
 
 ## Install
 
@@ -351,9 +350,9 @@ In order to make use of service providers, we will work with a `ServiceContainer
 
 ```php
 use Bhittani\Container\ServiceContainer;
-use Bhittani\Container\AbstractServiceProvider;
+use Bhittani\Container\ServiceProvider;
 
-class DatabaseServiceProvider extends AbstractServiceProvider
+class DatabaseServiceProvider extends ServiceProvider
 {
     public function boot($container)
     {
@@ -424,9 +423,9 @@ Service providers can be deferred so that services can be lazy loaded.
 
 ```php
 use Bhittani\Container\ServiceContainer;
-use Bhittani\Container\AbstractServiceProvider;
+use Bhittani\Container\ServiceProvider;
 
-class DatabaseServiceProvider extends AbstractServiceProvider
+class DatabaseServiceProvider extends ServiceProvider
 {
     // A non empty $provides array will defer this service provider.
     protected $provides = [
