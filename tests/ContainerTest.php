@@ -5,6 +5,7 @@ namespace Bhittani\Container;
 use ArrayAccess;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use stdClass;
 
 class ContainerTest extends TestCase
 {
@@ -109,6 +110,16 @@ class ContainerTest extends TestCase
     }
 
     /** @test */
+    function it_provides_the_container_when_resolving_a_closure()
+    {
+        $this->container->add('closure', function ($container) {
+            return $container;
+        });
+
+        $this->assertEquals($this->container, $this->container->get('closure'));
+    }
+
+    /** @test */
     function it_resolves_a_direct_closure()
     {
         $result = $this->container->call(function (Fixtures\WithTwoParams $w2) {
@@ -166,6 +177,30 @@ class ContainerTest extends TestCase
     }
 
     /** @test */
+    function it_resolves_the_arguments_of_a_closure_when_resolving_the_closure()
+    {
+        $this->container->add('closure1', function (stdClass $stdObj) {
+            return $stdObj;
+        });
+
+        $this->assertInstanceOf(stdClass::class, $a = $this->container->get('closure1'));
+        $this->assertInstanceOf(stdClass::class, $b = $this->container->get('closure1'));
+        $this->assertNotSame($a, $b);
+
+        $fn = function () {
+            return 'foobar';
+        };
+
+        $this->container->add('closure2', function (stdClass $stdObj) use (& $fn) {
+            return $fn;
+        });
+
+        // Purposely asserting twice to ensure it works on subsequent calls.
+        $this->assertEquals($fn, $this->container->get('closure2'));
+        $this->assertEquals($fn, $this->container->get('closure2'));
+    }
+
+    /** @test */
     function it_allows_singletons()
     {
         $class = Fixtures\WithZeroParams::class;
@@ -188,6 +223,35 @@ class ContainerTest extends TestCase
         $resolvedShared2 = $this->container->get('shared');
         $this->assertInstanceOf($class, $resolvedShared2);
         $this->assertNotSame($resolvedShared1, $resolvedShared2);
+    }
+
+    /** @test */
+    function it_resolves_the_arguments_of_a_shared_closure_when_resolving_the_closure()
+    {
+        $stdObj1 = null;
+
+        $this->container->share('closure1', function (stdClass $stdObj) use (& $stdObj1) {
+            return $stdObj1 = $stdObj;
+        });
+
+        $a = $this->container->get('closure1');
+        $b = $this->container->get('closure1');
+        $this->assertSame($stdObj1, $a);
+        $this->assertSame($stdObj1, $b);
+
+        $stdObj2 = null;
+
+        $fn = function ($stdObj) use (&$stdObj2) {
+            return $stdObj2 = $stdObj;
+        };
+
+        $this->container->share('closure2', function (stdClass $stdObj) use (&$fn) {
+            return $fn;
+        });
+
+        // Purposely asserting twice to ensure it works on subsequent calls.
+        $this->assertEquals($fn, $this->container->get('closure2'));
+        $this->assertEquals($fn, $this->container->get('closure2'));
     }
 
     /** @test */

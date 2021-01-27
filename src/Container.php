@@ -45,6 +45,13 @@ class Container implements ContainerInterface, ArrayAccess
     protected $aliases = [];
 
     /**
+     * Resolved.
+     *
+     * @var string[]
+     */
+    protected $resolved = [];
+
+    /**
      * Delegations.
      *
      * @var ContainerInterface[]
@@ -82,9 +89,20 @@ class Container implements ContainerInterface, ArrayAccess
                 return $entity;
             }
 
+            $shared = in_array($key, $this->shared);
+            $resolved = in_array($key, $this->resolved);
+
+            if ($shared && $resolved) {
+                return $entity;
+            }
+
             try {
-                $entity = $entity($this, ...$arguments);
-                // $entity = $this->resolveCallable($entity, $arguments);
+                $parameters = $this->getParameters($entity);
+                $hasMoreThanOneParameters = count($parameters) > 1;
+                $hasTypedParameters = $parameters && $parameters[0]->getType();
+                $entity = ($hasMoreThanOneParameters || $hasTypedParameters)
+                    ? $this->resolveCallable($entity, $arguments)
+                    : $entity($this);
             } catch (Exception $e) {
                 throw new BindingResolutionException(
                     "Failed to resolve {$key} from the container.",
@@ -93,8 +111,12 @@ class Container implements ContainerInterface, ArrayAccess
                 );
             }
 
-            if (in_array($key, $this->shared)) {
+            if ($shared) {
                 $this->items[$key] = $entity;
+            }
+
+            if (! $resolved) {
+                $this->resolved[] = $key;
             }
 
             return $entity;
@@ -358,11 +380,36 @@ class Container implements ContainerInterface, ArrayAccess
      */
     protected function resolveCallable(callable $callable, array $arguments = [])
     {
+        return $callable(...$this->resolveBindings($callable, $arguments));
+    }
+
+    /**
+     * Resolve bindings of a callable.
+     *
+     * @param  callable $callable
+     * @param  mixed[]    $arguments
+     *
+     * @return mixed[]
+     */
+    protected function resolveBindings(callable $callable, array $arguments = [])
+    {
+        return $this->resolve($this->getParameters($callable), $arguments);
+    }
+
+    /**
+     * Get parameters of a callable.
+     *
+     * @param  callable $callable
+     *
+     * @return ReflectionParameter[]
+     */
+    protected function getParameters(callable $callable)
+    {
         $reflectedFunction = (is_string($callable) || $callable instanceof Closure)
             ? new ReflectionFunction($callable)
             : (new ReflectionClass($callable))->getMethod('__invoke');
 
-        return $callable(...$this->resolve($reflectedFunction->getParameters(), $arguments));
+        return $reflectedFunction->getParameters();
     }
 
     /**
