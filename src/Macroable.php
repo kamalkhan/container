@@ -30,6 +30,7 @@ trait Macroable
      *
      * @param string  $method
      * @param mixed[] $arguments
+     * @param mixed   $name
      *
      * @return mixed
      */
@@ -45,11 +46,7 @@ trait Macroable
             return $macro(...$arguments);
         }
 
-        throw new BadMethodCallException(sprintf(
-            'Call to undefined method %s::%s().',
-            static::class,
-            $name
-        ));
+        throw new BadMethodCallException(sprintf('Call to undefined method %s::%s().', static::class, $name));
     }
 
     /**
@@ -68,7 +65,6 @@ trait Macroable
      * Bind a macro.
      *
      * @param string $name
-     * @param callable $macro
      *
      * @return $this
      */
@@ -83,6 +79,7 @@ trait Macroable
      * Mix methods of another object into the class as macros.
      *
      * @param object $mixin
+     * @param mixed  $override
      *
      * @return $this
      */

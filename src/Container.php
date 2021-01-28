@@ -68,11 +68,10 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Get an item.
      *
-     * @param  string $key
-     * @param  array  $arguments
+     * @param string $key
      *
-     * @throws NotFoundException if the key is not managed by the container.
-     * @throws BindingResolutionException if a binding can not be resolved from the container.
+     * @throws NotFoundException          if the key is not managed by the container
+     * @throws BindingResolutionException if a binding can not be resolved from the container
      *
      * @return mixed
      */
@@ -104,11 +103,7 @@ class Container implements ContainerInterface, ArrayAccess
                     ? $this->resolveCallable($entity, $arguments)
                     : $entity($this);
             } catch (Exception $e) {
-                throw new BindingResolutionException(
-                    "Failed to resolve {$key} from the container.",
-                    $e->getCode(),
-                    $e
-                );
+                throw new BindingResolutionException("Failed to resolve {$key} from the container.", $e->getCode(), $e);
             }
 
             if ($shared) {
@@ -134,18 +129,13 @@ class Container implements ContainerInterface, ArrayAccess
             throw new NotFoundException("Failed to resolve interface {$key}.");
         }
 
-        throw new NotFoundException(
-            "{$key} is not managed by the container."
-        );
+        throw new NotFoundException("{$key} is not managed by the container.");
     }
 
     /**
      * Resolve a callable.
      *
-     * @param  callable $callable
-     * @param  array    $arguments
-     *
-     * @throws BindingResolutionException Entry can not be resolved.
+     * @throws BindingResolutionException entry can not be resolved
      *
      * @return mixed
      */
@@ -157,7 +147,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Tell whether an item exists.
      *
-     * @param  string $key
+     * @param string $key
      *
      * @return bool
      */
@@ -173,8 +163,8 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Add an item.
      *
-     * @param  string $key
-     * @param  mixed  $value
+     * @param string $key
+     * @param mixed  $value
      *
      * @return Container
      */
@@ -189,8 +179,8 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Add a shared item.
      *
-     * @param  string $key
-     * @param  mixed  $value
+     * @param string $key
+     * @param mixed  $value
      *
      * @return Container
      */
@@ -206,7 +196,7 @@ class Container implements ContainerInterface, ArrayAccess
      * Alias an item.
      *
      * @param string|array $aliases
-     * @param string $actual
+     * @param string       $actual
      *
      * @return Container
      */
@@ -243,8 +233,6 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Add a delegation.
      *
-     * @param  ContainerInterface $container
-     *
      * @return Container
      */
     public function delegate(ContainerInterface $container)
@@ -257,8 +245,8 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * ArrayAccess: Alias of add.
      *
-     * @param  string $offset
-     * @param  mixed  $value
+     * @param string $offset
+     * @param mixed  $value
      *
      * @return mixed
      */
@@ -282,7 +270,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * ArrayAccess: Alias of has.
      *
-     * @param  string $offset
+     * @param string $offset
      *
      * @return bool
      */
@@ -294,7 +282,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * ArrayAccess: Alias of remove.
      *
-     * @param  string $offset
+     * @param string $offset
      */
     public function offsetUnset($offset)
     {
@@ -304,7 +292,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * ArrayAccess: Alias of get.
      *
-     * @param  string $offset
+     * @param string $offset
      *
      * @return mixed
      */
@@ -316,10 +304,10 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Resolve parameter bindings.
      *
-     * @param  ReflectionParameter[] $bindings
-     * @param  mixed[] $arguments
+     * @param ReflectionParameter[] $bindings
+     * @param mixed[]               $arguments
      *
-     * @throws NotFoundException If the bindings can not be resolved.
+     * @throws NotFoundException if the bindings can not be resolved
      *
      * @return mixed[]
      */
@@ -355,8 +343,8 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Resolve a class.
      *
-     * @param  string $class
-     * @param  mixed[]  $arguments
+     * @param string  $class
+     * @param mixed[] $arguments
      *
      * @return object
      */
@@ -373,8 +361,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Resolve a callable.
      *
-     * @param  callable $callable
-     * @param  mixed[]    $arguments
+     * @param mixed[] $arguments
      *
      * @return mixed
      */
@@ -386,8 +373,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Resolve bindings of a callable.
      *
-     * @param  callable $callable
-     * @param  mixed[]    $arguments
+     * @param mixed[] $arguments
      *
      * @return mixed[]
      */
@@ -398,8 +384,6 @@ class Container implements ContainerInterface, ArrayAccess
 
     /**
      * Get parameters of a callable.
-     *
-     * @param  callable $callable
      *
      * @return ReflectionParameter[]
      */
@@ -415,7 +399,7 @@ class Container implements ContainerInterface, ArrayAccess
     /**
      * Find an item including within delegates.
      *
-     * @param  string  $key
+     * @param string $key
      *
      * @return mixed
      */

@@ -8,7 +8,7 @@ class ServiceContainerTest extends TestCase
 {
     protected $container;
 
-    function setUp()
+    function setUp(): void
     {
         Fixtures\TestServiceProvider::$calls = [];
 

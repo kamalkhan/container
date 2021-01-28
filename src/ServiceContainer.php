@@ -74,7 +74,7 @@ class ServiceContainer extends Container
      * Add a facade.
      *
      * @param string $property
-     * @param mixed $value
+     * @param mixed  $value
      *
      * @return mixed
      */
@@ -95,14 +95,7 @@ class ServiceContainer extends Container
     public function __get($property)
     {
         if (! isset($this->facades[$property])) {
-            throw new Exception(
-                sprintf(
-                    'Undefined property %s::%s. Facade %s is not defined.',
-                    static::class,
-                    $property,
-                    $property
-                )
-            );
+            throw new Exception(sprintf('Undefined property %s::%s. Facade %s is not defined.', static::class, $property, $property));
         }
 
         $facade = $this->facades[$property];
@@ -117,8 +110,9 @@ class ServiceContainer extends Container
     /**
      * Call a macro.
      *
-     * @param string $name
+     * @param string  $name
      * @param mixed[] $arguments
+     *
      * @return mixed
      */
     public function __call($name, array $arguments)
@@ -135,9 +129,9 @@ class ServiceContainer extends Container
     /**
      * {@inheritdoc}
      *
-     * @param  string $key
-     * @param  mixed  $value
-     * @param  bool|string   $facade
+     * @param string      $key
+     * @param mixed       $value
+     * @param bool|string $facade
      *
      * @return ServiceContainer
      */
@@ -153,9 +147,9 @@ class ServiceContainer extends Container
     /**
      * {@inheritdoc}
      *
-     * @param  string $key
-     * @param  mixed  $value
-     * @param  bool|string   $facade
+     * @param string      $key
+     * @param mixed       $value
+     * @param bool|string $facade
      *
      * @return ServiceContainer
      */
@@ -172,8 +166,8 @@ class ServiceContainer extends Container
      * {@inheritdoc}
      *
      * @param string|array $aliases
-     * @param string $actual
-     * @param bool $facade
+     * @param string       $actual
+     * @param bool         $facade
      *
      * @return ServiceContainer
      */
@@ -230,8 +224,7 @@ class ServiceContainer extends Container
      * Add a service provider.
      *
      * @param string|ServiceProviderInterface $provider
-     *
-     * @param mixed ...$arguments
+     * @param mixed                           ...$arguments
      *
      * @return ServiceContainer
      */
@@ -270,7 +263,7 @@ class ServiceContainer extends Container
      * Add a facade.
      *
      * @param string $key
-     * @param mixed $facade
+     * @param mixed  $facade
      *
      * @return ServiceContainer
      */
@@ -302,6 +295,7 @@ class ServiceContainer extends Container
      * Bootstrap the service providers.
      *
      * @param mixed ...$arguments
+     *
      * @return ServiceContainer
      */
     public function bootstrap(...$arguments)
@@ -327,8 +321,8 @@ class ServiceContainer extends Container
      * Register the service provider.
      *
      * @param string|ServiceProviderInterface $class
-     * @param bool $force
-     * @param null|bool $isDeferred
+     * @param bool                            $force
+     * @param bool|null                       $isDeferred
      *
      * @return ServiceProviderInterface
      */
@@ -347,12 +341,7 @@ class ServiceContainer extends Container
         }
 
         if (! ($provider instanceof ServiceProviderInterface)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    '%s is not a valid service provider',
-                    $class
-                )
-            );
+            throw new InvalidArgumentException(sprintf('%s is not a valid service provider', $class));
         }
 
         if (! $force && $this->isServiceProviderDeferrable($provider)) {
@@ -369,8 +358,6 @@ class ServiceContainer extends Container
     /**
      * Boot the service provider.
      *
-     * @param ServiceProviderInterface $provider
-     *
      * @return ServiceProviderInterface
      */
     protected function bootServiceProvider(ServiceProviderInterface $provider, ...$arguments)
@@ -385,7 +372,6 @@ class ServiceContainer extends Container
     /**
      * Defer the service provider.
      *
-     * @param ServiceProviderInterface $provider
      * @param bool $useInstance
      *
      * @return ServiceProviderInterface
@@ -434,8 +420,6 @@ class ServiceContainer extends Container
     /**
      * Tell whether the service provider is bootable.
      *
-     * @param ServiceProviderInterface $provider
-     *
      * @return bool
      */
     protected function isServiceProviderBootable(ServiceProviderInterface $provider)
@@ -445,8 +429,6 @@ class ServiceContainer extends Container
 
     /**
      * Tells whether the service provider is deferrable.
-     *
-     * @param ServiceProviderInterface $provider
      *
      * @return bool
      */

@@ -11,10 +11,7 @@
 
 namespace Bhittani\Container;
 
-abstract class ServiceProvider implements
-    ServiceProviderInterface,
-        BootableServiceProviderInterface,
-        DeferrableServiceProviderInterface
+abstract class ServiceProvider implements ServiceProviderInterface, BootableServiceProviderInterface, DeferrableServiceProviderInterface
 {
     /**
      * Macros.

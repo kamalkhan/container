@@ -13,5 +13,4 @@ namespace Bhittani\Container;
 
 class BindingResolutionException extends NotFoundException
 {
-    //
 }
