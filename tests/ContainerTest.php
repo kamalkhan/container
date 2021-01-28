@@ -250,8 +250,21 @@ class ContainerTest extends TestCase
         });
 
         // Purposely asserting twice to ensure it works on subsequent calls.
-        $this->assertEquals($fn, $this->container->get('closure2'));
-        $this->assertEquals($fn, $this->container->get('closure2'));
+        $this->assertSame($fn, $this->container->get('closure2'));
+        $this->assertSame($fn, $this->container->get('closure2'));
+
+        $fn2 = function ($stdObj) use (&$stdObj2) {
+            return $stdObj2 = $stdObj;
+        };
+
+        // Re-share closure2 to ensure it replaces the previous shared factory.
+        $this->container->share('closure2', function (stdClass $stdObj) use (&$fn2) {
+            return $fn2;
+        });
+
+        // Purposely asserting twice to ensure it works on subsequent calls.
+        $this->assertSame($fn2, $this->container->get('closure2'));
+        $this->assertSame($fn2, $this->container->get('closure2'));
     }
 
     /** @test */

@@ -222,6 +222,7 @@ class Container implements ContainerInterface, ArrayAccess
         unset($this->items[$key]);
 
         $this->shared = array_diff($this->shared, [$key]);
+        $this->resolved = array_diff($this->resolved, [$key]);
 
         if (! in_array($key, $this->ignoreInDelegates)) {
             $this->ignoreInDelegates[] = $key;
