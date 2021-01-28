@@ -1,6 +1,6 @@
 # PSR-11 Container
 
-[![Travis Build Status][icon-status]][link-status]
+[![Build Status][icon-status]][link-status]
 [![Packagist Downloads][icon-downloads]][link-downloads]
 [![License][icon-license]](LICENSE.md)
 
@@ -501,8 +501,8 @@ If you discover any security related issues, please email `shout@bhittani.com` i
 The MIT License (MIT). Please see the [License File](LICENSE.md) for more information.
 
 <!--Status-->
-[icon-status]: https://img.shields.io/travis/kamalkhan/container.svg?style=flat-square
-[link-status]: https://travis-ci.org/kamalkhan/container
+[icon-status]: https://github.com/kamalkhan/container/workflows/Test/badge.svg
+[link-status]: https://github.com/kamalkhan/container/actions
 <!--Downloads-->
 [icon-downloads]: https://img.shields.io/packagist/dt/bhittani/container.svg?style=flat-square
 [link-downloads]: https://packagist.org/packages/bhittani/container
